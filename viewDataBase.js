@@ -9,12 +9,4 @@ db.serialize(() => {
 
     console.log(rows);
   });
-
-  db.each("SELECT * FROM Memes", (error, row) => {
-    if (error) {
-      throw error;
-    }
-
-    console.log(row);
-  });
 });
