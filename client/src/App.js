@@ -32,18 +32,48 @@ class App extends Component {
     this.pickResponse = this.pickResponse.bind(this);
     this.addMeme = this.addMeme.bind(this);
     this.pickPic = this.pickPic.bind(this);
+    this.memeClear = this.memeClear.bind(this);
+    this.checkUpdate = this.checkUpdate.bind(this);
+  }
+
+  checkUpdate() {
+    this.forceUpdate();
+  }
+
+  memeClear() {
+    this.clearMemes().catch(err => console.log(err));
+
+    this.setState({
+      memeData: []
+    });
   }
 
   addMeme() {
-    this.postMeme().catch(err => console.log(err));
+    this.postMeme()
+      .catch(err => console.log(err))
+      .then(this.forceUpdate());
   }
 
+  clearMemes = async () => {
+    await fetch("/memeClear");
+  };
+
   postMeme = async () => {
-    fetch(
+    await fetch(
       `/memePost/?memeText=${this.pickResponse()}&memePic=${this.pickPic()}`,
       {
         method: "POST"
       }
+    ).then(res =>
+      res.json().then(data =>
+        this.state.memeData.push(
+          <tr key={data.express.id}>
+            <td>{data.express.id}</td>
+            <td>{data.express.memeText}</td>
+            <td>{data.express.memePic}</td>
+          </tr>
+        )
+      )
     );
   };
 
@@ -104,6 +134,15 @@ class App extends Component {
     return body;
   };
 
+  callMemeCheck = async () => {
+    const response = await fetch("/api/memeCheck");
+    const body = await response.json();
+
+    if (response.status !== 200) throw Error(body.message);
+
+    return body;
+  };
+
   callHeck = async () => {
     const response = await fetch("/api/heck");
     const body = await response.json();
@@ -152,6 +191,8 @@ class App extends Component {
           <tbody>{this.state.memeData}</tbody>
         </table>
         <button onClick={this.addMeme}>Add a row to table</button>
+        <button onClick={this.memeClear}>Clear all rows</button>
+        <button onClick={this.checkUpdate}>Check for updated list</button>
       </div>
     );
   }
