@@ -82,5 +82,27 @@ app.post("/memePost/", (req, res, next) => {
   });
 });
 
+//memePUT is responsible for doing a put request for changing memeText and memePic. It is the go to
+//whether either field is blank or neither field is blank.
+//it will do a db.run for which ever field is filled in.
+app.put("/memePUT", (req, res, next) => {
+  if (
+    typeof req.query.memeText !== "undefined" &&
+    typeof req.query.memePic !== "undefined"
+  ) {
+    res.status(201).send({ express: "Neither was undefined" });
+  } else if (
+    typeof req.query.memeText !== "undefined" &&
+    typeof req.query.memePic === "undefined"
+  ) {
+    res.status(201).send({ express: "Meme Pic is undefined" });
+  } else if (
+    typeof req.query.memeText === "undefined" &&
+    typeof req.query.memePic !== "undefined"
+  ) {
+    res.status(201).send({ express: "Meme Text was undefined" });
+  }
+});
+
 //It listens here and we established the port at the top of the file
 app.listen(port, () => console.log(`Listening on port ${port}`));

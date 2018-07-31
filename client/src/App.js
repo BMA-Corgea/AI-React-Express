@@ -13,13 +13,21 @@ class App extends Component {
     this.state = {
       response: "",
       heck: "",
-      memeData: []
+      memeData: [],
+      lastID: 0,
+      PUTID: 0,
+      PUTMemeText: "",
+      PUTMemePic: ""
     };
 
     //this initially fills out the table with all the data from the SQL databse
     this.callMemeData()
       .then(res => {
         for (let memeIndex = 0; memeIndex < res.express.length; memeIndex++) {
+          this.setState({
+            lastID: res.express[memeIndex].id
+          });
+
           this.state.memeData.push(
             <tr key={res.express[memeIndex].id}>
               <td>{res.express[memeIndex].id}</td>
@@ -38,6 +46,38 @@ class App extends Component {
     this.pickPic = this.pickPic.bind(this);
     this.memeClear = this.memeClear.bind(this);
     this.checkUpdate = this.checkUpdate.bind(this);
+    this.changeMeme = this.changeMeme.bind(this);
+    this.updatePUTID = this.updatePUTID.bind(this);
+    this.updatePUTMemeText = this.updatePUTMemeText.bind(this);
+    this.updatePUTMemePic = this.updatePUTMemePic.bind(this);
+  }
+
+  //These 3 functions update the state so that the PUT request can pull from the state
+  //I prefer this to asking for a getElementById
+  updatePUTID(event) {
+    this.setState({
+      PUTID: event.target.value
+    });
+  }
+
+  updatePUTMemeText(event) {
+    this.setState({
+      PUTMemeText: event.target.value
+    });
+  }
+
+  updatePUTMemePic(event) {
+    this.setState({
+      PUTMemePic: event.target.value
+    });
+  }
+
+  //this is for handling PUT requests. It has extra logic to make sure that blank fields don't
+  //change the field. Also, if the requested ID is larger than the field it won't go
+  changeMeme(event) {
+    this.memePUT();
+
+    event.preventDefault();
   }
 
   //adding a new row to the table doesn't always make it appear. This button makes it appear
@@ -80,16 +120,86 @@ class App extends Component {
         method: "POST"
       }
     ).then(res =>
-      res.json().then(data =>
+      res.json().then(data => {
         this.state.memeData.push(
           <tr key={data.express.id}>
             <td>{data.express.id}</td>
             <td>{data.express.memeText}</td>
             <td>{data.express.memePic}</td>
           </tr>
-        )
-      )
+        );
+        this.setState({
+          lastID: data.express.id
+        });
+      })
     );
+  };
+
+  /*
+
+  */
+
+  //Meme put is complicated because of all the different possibilities to mess up the put request
+  //Say you don't want to change the Pic and just the text, you can just leave pic blank with this.
+  //The first part is making sure the ID corrisponds to something in the SQL Database
+  //The second part is different PUT requests for the 4 different scenarios
+  //If both are blank it will call you out on it.
+  memePUT = async () => {
+    if (this.state.PUTID < 1) {
+      alert("ID must be above 0");
+    } else if (this.state.PUTID > this.state.lastID) {
+      alert("ID is above the highest ID");
+    } else if (this.state.PUTID % 1 !== 0) {
+      alert("Cmon, man...");
+    } else {
+      if (this.state.PUTMemeText !== "" && this.state.PUTMemePic !== "") {
+        await fetch(
+          `/memePUT/?id=${this.state.PUTID}&memeText=${
+            this.state.PUTMemeText
+          }&memePic=${this.state.PUTMemePic}`,
+          {
+            method: "PUT"
+          }
+        ).then(res =>
+          res.json().then(data => {
+            console.log(data);
+          })
+        );
+      } else if (
+        this.state.PUTMemeText !== "" &&
+        this.state.PUTMemePic === ""
+      ) {
+        await fetch(
+          `/memePUT/?id=${this.state.PUTID}&memeText=${this.state.PUTMemeText}`,
+          {
+            method: "PUT"
+          }
+        ).then(res =>
+          res.json().then(data => {
+            console.log(data);
+          })
+        );
+      } else if (
+        this.state.PUTMemeText === "" &&
+        this.state.PUTMemePic !== ""
+      ) {
+        await fetch(
+          `/memePUT/?id=${this.state.PUTID}&memePic=${this.state.PUTMemePic}`,
+          {
+            method: "PUT"
+          }
+        ).then(res =>
+          res.json().then(data => {
+            console.log(data);
+          })
+        );
+      } else if (
+        this.state.PUTMemeText === "" &&
+        this.state.PUTMemePic === ""
+      ) {
+        alert("Both Meme Text and Meme Pic are blank");
+      }
+    }
   };
 
   //Simple choose 1 of 4 function
@@ -218,6 +328,16 @@ class App extends Component {
         <button onClick={this.addMeme}>Add a row to table</button>
         <button onClick={this.memeClear}>Clear all rows</button>
         <button onClick={this.checkUpdate}>Check for updated list</button>
+        <br />
+        <br />
+        <form>
+          Manipulate an ID:<br />ID:{" "}
+          <input type="number" onChange={this.updatePUTID} /> Meme Text:{" "}
+          <input type="text" onChange={this.updatePUTMemeText} /> Meme Pic:{" "}
+          <input type="text" onChange={this.updatePUTMemePic} />
+          <br />
+          <button onClick={this.changeMeme}>Enter request</button>
+        </form>
       </div>
     );
   }
