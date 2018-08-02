@@ -146,5 +146,13 @@ app.put("/memePUT", (req, res, next) => {
   }
 });
 
+app.put("/memeDelete", (req, res, next) => {
+  db.run(`DELETE FROM Memes WHERE id=${req.query.id}`, error => {
+    if (error) {
+      throw error;
+    }
+  });
+});
+
 //It listens here and we established the port at the top of the file
 app.listen(port, () => console.log(`Listening on port ${port}`));

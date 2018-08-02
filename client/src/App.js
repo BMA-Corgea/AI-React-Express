@@ -19,7 +19,8 @@ class App extends Component {
       PUTMemeText: "",
       PUTMemePic: "",
       originalMemeText: "",
-      originalMemePic: ""
+      originalMemePic: "",
+      deletePUTID: 0
     };
 
     //this initially fills out the table with all the data from the SQL databse
@@ -55,6 +56,41 @@ class App extends Component {
     this.filterMemeData = this.filterMemeData.bind(this);
     this.checkMemeData = this.checkMemeData.bind(this);
     this.handleFilterScenarios = this.handleFilterScenarios.bind(this);
+    this.handleMemeDelete = this.handleMemeDelete.bind(this);
+    this.updatedDeletePUTID = this.updatedDeletePUTID.bind(this);
+    this.findMemeInArray = this.findMemeInArray.bind(this);
+  }
+
+  handleMemeDelete(event) {
+    this.deleteMeme()
+      .then(
+        this.setState({
+          memeData: [
+            ...this.state.memeData.filter(meme => {
+              return meme.key !== this.state.deletePUTID;
+            })
+          ]
+        })
+      )
+      .catch(err => console.log(err));
+
+    event.preventDefault();
+  }
+
+  /* The array doesn't like disorder in the IDs. I found this problem when there were only 7
+  active IDs, but the IDs went up to 10. This was done by adding a delete requests
+  instead of simply saying that the item in the array will be the PUTID - 1th getElementById
+  of the array, I need to find the element that corrisponds to the correct ID*/
+  findMemeInArray(memeID) {
+    for (
+      let memeDataIndex = 0;
+      memeDataIndex < this.state.memeData.length;
+      memeDataIndex++
+    ) {
+      if (this.state.memeData[memeDataIndex].key === memeID) {
+        return memeDataIndex;
+      }
+    }
   }
 
   /* This is simple enough, it is the three different scenarios that are possible
@@ -106,31 +142,46 @@ the filterMemeData() function.*/
   it pushes a new tr that has the same id and has done the put requests
   this will produce the change without having to refresh the page*/
   filterMemeData() {
-    this.setState(
-      {
-        originalMemeText: this.state.memeData[this.state.PUTID - 1].props
-          .children[1].props.children,
-        originalMemePic: this.state.memeData[this.state.PUTID - 1].props
-          .children[2].props.children
-      },
-      () => {
-        this.setState({
-          memeData: [
-            ...this.state.memeData.filter(meme => {
-              return meme.key !== this.state.PUTID;
-            }),
-            this.handleFilterScenarios()
-          ]
-        });
-      }
-    );
+    if (
+      this.state.memeData.some(meme => {
+        return meme.key === this.state.PUTID;
+      })
+    ) {
+      this.setState(
+        {
+          originalMemeText: this.state.memeData[
+            this.findMemeInArray(this.state.PUTID)
+          ].props.children[1].props.children,
+          originalMemePic: this.state.memeData[
+            this.findMemeInArray(this.state.PUTID)
+          ].props.children[2].props.children
+        },
+        () => {
+          this.setState({
+            memeData: [
+              ...this.state.memeData.filter(meme => {
+                return meme.key !== this.state.PUTID;
+              }),
+              this.handleFilterScenarios()
+            ]
+          });
+        }
+      );
+    }
   }
 
-  //These 3 functions update the state so that the PUT request can pull from the state
+  //These 4 functions update the state so that the PUT request can pull from the state
   //I prefer this to asking for a getElementById
+  //added another function for deleting a row
   updatePUTID(event) {
     this.setState({
       PUTID: event.target.value
+    });
+  }
+
+  updatedDeletePUTID(event) {
+    this.setState({
+      deletePUTID: event.target.value
     });
   }
 
@@ -150,8 +201,8 @@ the filterMemeData() function.*/
   //change the field. Also, if the requested ID is larger than the field it won't go
   changeMeme(event) {
     this.memePUT()
-      .then(this.filterMemeData())
-      .catch(err => console.log(err));
+      .catch(err => console.log(err))
+      .then(this.filterMemeData());
 
     event.preventDefault();
   }
@@ -211,9 +262,28 @@ the filterMemeData() function.*/
     );
   };
 
-  /*
-
-  */
+  deleteMeme = async () => {
+    if (this.state.deletePUTID < 1) {
+      alert("ID must be above 0");
+    } else if (this.state.deletePUTID > this.state.lastID) {
+      alert("ID is above the highest ID");
+    } else if (this.state.deletePUTID % 1 !== 0) {
+      alert("Cmon, man...");
+    } else {
+      if (
+        this.state.memeData.some(meme => {
+          return meme.key === this.state.deletePUTID;
+        })
+      ) {
+        await fetch(`/memeDelete/?id=${this.state.deletePUTID}`, {
+          method: "PUT"
+        }).then(res => res.json().then(data => console.log(data)));
+      } else {
+        alert("ID does not corrispond to a row");
+        throw new Error("ID mismatch");
+      }
+    }
+  };
 
   //Meme put is complicated because of all the different possibilities to mess up the put request
   //Say you don't want to change the Pic and just the text, you can just leave pic blank with this.
@@ -223,11 +293,18 @@ the filterMemeData() function.*/
   memePUT = async () => {
     if (this.state.PUTID < 1) {
       alert("ID must be above 0");
+      throw new Error("ID mismatch");
     } else if (this.state.PUTID > this.state.lastID) {
       alert("ID is above the highest ID");
+      throw new Error("ID mismatch");
     } else if (this.state.PUTID % 1 !== 0) {
       alert("Cmon, man...");
-    } else {
+      throw new Error("ID mismatch");
+    } else if (
+      this.state.memeData.some(meme => {
+        return meme.key === this.state.PUTID;
+      })
+    ) {
       if (this.state.PUTMemeText !== "" && this.state.PUTMemePic !== "") {
         await fetch(
           `/memePUT/?id=${this.state.PUTID}&memeText=${
@@ -275,6 +352,9 @@ the filterMemeData() function.*/
       ) {
         alert("Both Meme Text and Meme Pic are blank");
       }
+    } else {
+      alert("ID does not corrispond to a row");
+      throw new Error("ID mismatch");
     }
   };
 
@@ -416,6 +496,14 @@ the filterMemeData() function.*/
         </form>
         <br />
         <button onClick={this.checkMemeData}>Check meme data</button>
+        <br />
+        <br />
+        <form>
+          Select ID to delete:{" "}
+          <input type="number" onChange={this.updatedDeletePUTID} />
+          <br />
+          <button onClick={this.handleMemeDelete}>Delete row</button>
+        </form>
       </div>
     );
   }
