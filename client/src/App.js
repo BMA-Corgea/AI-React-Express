@@ -17,7 +17,9 @@ class App extends Component {
       lastID: 0,
       PUTID: 0,
       PUTMemeText: "",
-      PUTMemePic: ""
+      PUTMemePic: "",
+      originalMemeText: "",
+      originalMemePic: ""
     };
 
     //this initially fills out the table with all the data from the SQL databse
@@ -50,6 +52,78 @@ class App extends Component {
     this.updatePUTID = this.updatePUTID.bind(this);
     this.updatePUTMemeText = this.updatePUTMemeText.bind(this);
     this.updatePUTMemePic = this.updatePUTMemePic.bind(this);
+    this.filterMemeData = this.filterMemeData.bind(this);
+    this.checkMemeData = this.checkMemeData.bind(this);
+    this.handleFilterScenarios = this.handleFilterScenarios.bind(this);
+  }
+
+  /* This is simple enough, it is the three different scenarios that are possible
+after the put request. It just makes sure that, if one of the form sections is blank
+that it will keep the original value. The state for originalMemeText/Pic is handled in
+the filterMemeData() function.*/
+  handleFilterScenarios() {
+    if (this.state.PUTMemeText !== "" && this.state.PUTMemePic !== "") {
+      return (
+        <tr key={this.state.PUTID}>
+          <td>{this.state.PUTID}</td>
+          <td>{this.state.PUTMemeText}</td>
+          <td>{this.state.PUTMemePic}</td>
+        </tr>
+      );
+    } else if (this.state.PUTMemeText !== "" && this.state.PUTMemePic === "") {
+      return (
+        <tr key={this.state.PUTID}>
+          <td>{this.state.PUTID}</td>
+          <td>{this.state.PUTMemeText}</td>
+          <td>{this.state.originalMemePic}</td>
+        </tr>
+      );
+    } else if (this.state.PUTMemeText === "" && this.state.PUTMemePic !== "") {
+      return (
+        <tr key={this.state.PUTID}>
+          <td>{this.state.PUTID}</td>
+          <td>{this.state.originalMemeText}</td>
+          <td>{this.state.PUTMemePic}</td>
+        </tr>
+      );
+    }
+  }
+
+  checkMemeData() {
+    console.log(this.state.memeData);
+  }
+
+  //filterMemeData is made for the purpose of updating the table rows after
+  //the put request changes it in the SQL database
+  /*So, this function ended up being much more complicated than I had expected
+  First, we take note of what the row is before we change it. This makes is so
+  that I can handle the scenario of one of the forms being blank. The second part
+  of the function must be done within a callback. Don't ask me why
+  (https://stackoverflow.com/questions/37847028/react-setstate-not-working-on-first-try-but-works-on-second)
+  the three dots makes it so that the new array will take all the objects of the previous
+  array, but it won't be an array object within the array. The, the filter makes it so that
+  the array item that is the same as the one being selected is deleted. Finally,
+  it pushes a new tr that has the same id and has done the put requests
+  this will produce the change without having to refresh the page*/
+  filterMemeData() {
+    this.setState(
+      {
+        originalMemeText: this.state.memeData[this.state.PUTID - 1].props
+          .children[1].props.children,
+        originalMemePic: this.state.memeData[this.state.PUTID - 1].props
+          .children[2].props.children
+      },
+      () => {
+        this.setState({
+          memeData: [
+            ...this.state.memeData.filter(meme => {
+              return meme.key !== this.state.PUTID;
+            }),
+            this.handleFilterScenarios()
+          ]
+        });
+      }
+    );
   }
 
   //These 3 functions update the state so that the PUT request can pull from the state
@@ -75,7 +149,9 @@ class App extends Component {
   //this is for handling PUT requests. It has extra logic to make sure that blank fields don't
   //change the field. Also, if the requested ID is larger than the field it won't go
   changeMeme(event) {
-    this.memePUT();
+    this.memePUT()
+      .then(this.filterMemeData())
+      .catch(err => console.log(err));
 
     event.preventDefault();
   }
@@ -338,6 +414,8 @@ class App extends Component {
           <br />
           <button onClick={this.changeMeme}>Enter request</button>
         </form>
+        <br />
+        <button onClick={this.checkMemeData}>Check meme data</button>
       </div>
     );
   }

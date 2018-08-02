@@ -85,22 +85,64 @@ app.post("/memePost/", (req, res, next) => {
 //memePUT is responsible for doing a put request for changing memeText and memePic. It is the go to
 //whether either field is blank or neither field is blank.
 //it will do a db.run for which ever field is filled in.
+//the db.run is a simple UPDATE function on the SQL table. If you have followed this far
+//the function should make intuitive sense.
 app.put("/memePUT", (req, res, next) => {
   if (
     typeof req.query.memeText !== "undefined" &&
     typeof req.query.memePic !== "undefined"
   ) {
-    res.status(201).send({ express: "Neither was undefined" });
+    db.serialize(() => {
+      db.run(
+        `UPDATE Memes SET memeText = "${req.query.memeText}" WHERE id = ${
+          req.query.id
+        }`,
+        error => {
+          if (error) {
+            throw error;
+          }
+        }
+      );
+
+      db.run(
+        `UPDATE Memes SET memePic = "${req.query.memePic}" WHERE id = ${
+          req.query.id
+        }`,
+        error => {
+          if (error) {
+            throw error;
+          }
+        }
+      );
+    });
   } else if (
     typeof req.query.memeText !== "undefined" &&
     typeof req.query.memePic === "undefined"
   ) {
-    res.status(201).send({ express: "Meme Pic is undefined" });
+    db.run(
+      `UPDATE Memes SET memeText = "${req.query.memeText}" WHERE id = ${
+        req.query.id
+      }`,
+      error => {
+        if (error) {
+          throw error;
+        }
+      }
+    );
   } else if (
     typeof req.query.memeText === "undefined" &&
     typeof req.query.memePic !== "undefined"
   ) {
-    res.status(201).send({ express: "Meme Text was undefined" });
+    db.run(
+      `UPDATE Memes SET memePic = "${req.query.memePic}" WHERE id = ${
+        req.query.id
+      }`,
+      error => {
+        if (error) {
+          throw error;
+        }
+      }
+    );
   }
 });
 
