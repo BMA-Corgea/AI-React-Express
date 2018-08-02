@@ -53,6 +53,7 @@ app.get("/memeClear", (req, res) => {
       }
     );
   });
+  res.status(201).send({ express: `Table successfully cleared!` });
 });
 
 //The biggest trouble - taking information from react and then giving back new information
@@ -77,7 +78,10 @@ app.post("/memePost/", (req, res, next) => {
         throw error;
       }
 
-      res.status(201).send({ express: row });
+      res.status(201).send({
+        express: row,
+        post: "Row successfully posted!"
+      });
     });
   });
 });
@@ -115,6 +119,7 @@ app.put("/memePUT", (req, res, next) => {
         }
       );
     });
+    res.status(201).send({ express: `update successful for ${req.query.id}` });
   } else if (
     typeof req.query.memeText !== "undefined" &&
     typeof req.query.memePic === "undefined"
@@ -129,6 +134,7 @@ app.put("/memePUT", (req, res, next) => {
         }
       }
     );
+    res.status(201).send({ express: `update successful for ${req.query.id}` });
   } else if (
     typeof req.query.memeText === "undefined" &&
     typeof req.query.memePic !== "undefined"
@@ -143,6 +149,7 @@ app.put("/memePUT", (req, res, next) => {
         }
       }
     );
+    res.status(201).send({ express: `update successful for ${req.query.id}` });
   }
 });
 
@@ -152,6 +159,7 @@ app.put("/memeDelete", (req, res, next) => {
       throw error;
     }
   });
+  res.status(201).send({ express: `Delete successful for ${req.query.id}` });
 });
 
 //It listens here and we established the port at the top of the file

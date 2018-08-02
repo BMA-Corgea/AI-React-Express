@@ -63,6 +63,7 @@ class App extends Component {
 
   handleMemeDelete(event) {
     this.deleteMeme()
+
       .then(
         this.setState({
           memeData: [
@@ -201,6 +202,7 @@ the filterMemeData() function.*/
   //change the field. Also, if the requested ID is larger than the field it won't go
   changeMeme(event) {
     this.memePUT()
+
       .catch(err => console.log(err))
       .then(this.filterMemeData());
 
@@ -232,7 +234,9 @@ the filterMemeData() function.*/
 
   //this is the async function that sends the request to the express server
   clearMemes = async () => {
-    await fetch("/memeClear");
+    await fetch("/memeClear").then(res =>
+      res.json().then(data => console.log(data))
+    );
   };
 
   //post request for the express server. information that wants to be passed is sent through the url
@@ -258,6 +262,7 @@ the filterMemeData() function.*/
         this.setState({
           lastID: data.express.id
         });
+        console.log(data.post);
       })
     );
   };
