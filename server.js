@@ -7,6 +7,20 @@ const {
   logNodeError,
   printQueryResults
 } = require("./utils");
+const today = new Date();
+const currentTime =
+  today.getMonth() +
+  1 +
+  "/" +
+  today.getDate() +
+  "/" +
+  today.getFullYear() +
+  " at " +
+  today.getHours() +
+  ":" +
+  today.getMinutes() +
+  ":" +
+  today.getSeconds();
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -34,6 +48,16 @@ app.get("/api/memeData", (req, res) => {
   });
 });
 
+app.get("/memeChanges", (req, res) => {
+  db.all("SELECT * FROM memeChanges", (error, rows) => {
+    if (error) {
+      throw error;
+    }
+
+    res.send({ express: rows });
+  });
+});
+
 //rather simple because nothing needs to be sent back. This is just copy and pasted
 //sqlite3 jargon
 app.get("/memeClear", (req, res) => {
@@ -46,6 +70,21 @@ app.get("/memeClear", (req, res) => {
 
     db.run(
       "CREATE TABLE Memes (id INTEGER PRIMARY KEY, memeText STRING NOT NULL, memePic STRING NOT NULL)",
+      error => {
+        if (error) {
+          throw error;
+        }
+      }
+    );
+
+    db.run("DROP TABLE IF EXISTS memeChanges", error => {
+      if (error) {
+        throw error;
+      }
+    });
+
+    db.run(
+      "CREATE TABLE memeChanges (id INTEGER PRIMARY KEY, date STRING, memeId STRING, newMemeText STRING, newMemePic STRING)",
       error => {
         if (error) {
           throw error;
@@ -78,10 +117,31 @@ app.post("/memePost/", (req, res, next) => {
         throw error;
       }
 
-      res.status(201).send({
-        express: row,
-        post: "Row successfully posted!"
-      });
+      db.run(
+        `INSERT INTO memeChanges (date, memeId, newMemeText, newMemePic) VALUES ("${currentTime}", "${
+          row.id
+        }", "${req.query.memeText}", "${req.query.memePic}")`,
+        (error, changeRow) => {
+          if (error) {
+            throw error;
+          }
+        }
+      );
+
+      db.get(
+        "SELECT * FROM memeChanges WHERE id=last_insert_rowid()",
+        (error, changeRows) => {
+          if (error) {
+            throw error;
+          }
+
+          res.status(201).send({
+            express: row,
+            post: "Row successfully posted!",
+            change: changeRows
+          });
+        }
+      );
     });
   });
 });
@@ -118,48 +178,150 @@ app.put("/memePUT", (req, res, next) => {
           }
         }
       );
+
+      db.run(
+        `INSERT INTO memeChanges (date, memeId, newMemeText, newMemePic) VALUES ("${currentTime}", "${
+          req.query.id
+        }", "${req.query.memeText}", "${req.query.memePic}")`,
+        (error, row) => {
+          if (error) {
+            throw error;
+          }
+        }
+      );
+
+      db.get(
+        "SELECT * FROM memeChanges WHERE id=last_insert_rowid()",
+        (error, changeRows) => {
+          if (error) {
+            throw error;
+          }
+
+          res.status(201).send({
+            express: `update successful for ${req.query.id}`,
+            change: changeRows
+          });
+        }
+      );
     });
-    res.status(201).send({ express: `update successful for ${req.query.id}` });
   } else if (
     typeof req.query.memeText !== "undefined" &&
     typeof req.query.memePic === "undefined"
   ) {
-    db.run(
-      `UPDATE Memes SET memeText = "${req.query.memeText}" WHERE id = ${
-        req.query.id
-      }`,
-      error => {
-        if (error) {
-          throw error;
+    db.serialize(() => {
+      db.run(
+        `UPDATE Memes SET memeText = "${req.query.memeText}" WHERE id = ${
+          req.query.id
+        }`,
+        error => {
+          if (error) {
+            throw error;
+          }
         }
-      }
-    );
-    res.status(201).send({ express: `update successful for ${req.query.id}` });
+      );
+
+      db.run(
+        `INSERT INTO memeChanges (date, memeId, newMemeText) VALUES ("${currentTime}", "${
+          req.query.id
+        }", "${req.query.memeText}")`,
+        (error, row) => {
+          if (error) {
+            throw error;
+          }
+        }
+      );
+
+      db.get(
+        "SELECT * FROM memeChanges WHERE id=last_insert_rowid()",
+        (error, changeRows) => {
+          if (error) {
+            throw error;
+          }
+
+          res.status(201).send({
+            express: `update successful for ${req.query.id}`,
+            change: changeRows
+          });
+        }
+      );
+    });
   } else if (
     typeof req.query.memeText === "undefined" &&
     typeof req.query.memePic !== "undefined"
   ) {
+    db.serialize(() => {
+      db.run(
+        `UPDATE Memes SET memePic = "${req.query.memePic}" WHERE id = ${
+          req.query.id
+        }`,
+        error => {
+          if (error) {
+            throw error;
+          }
+        }
+      );
+
+      db.run(
+        `INSERT INTO memeChanges (date, memeId, newMemePic) VALUES ("${currentTime}", "${
+          req.query.id
+        }", "${req.query.memePic}")`,
+        (error, row) => {
+          if (error) {
+            throw error;
+          }
+        }
+      );
+
+      db.get(
+        "SELECT * FROM memeChanges WHERE id=last_insert_rowid()",
+        (error, changeRows) => {
+          if (error) {
+            throw error;
+          }
+
+          res.status(201).send({
+            express: `update successful for ${req.query.id}`,
+            change: changeRows
+          });
+        }
+      );
+    });
+  }
+});
+
+app.put("/memeDelete", (req, res, next) => {
+  db.serialize(() => {
+    db.run(`DELETE FROM Memes WHERE id=${req.query.id}`, error => {
+      if (error) {
+        throw error;
+      }
+    });
+
     db.run(
-      `UPDATE Memes SET memePic = "${req.query.memePic}" WHERE id = ${
+      `INSERT INTO memeChanges (date, memeId, newMemeText, newMemePic) VALUES ("${currentTime}", "${
         req.query.id
-      }`,
-      error => {
+      }", "DELETED", "DELETED")`,
+      (error, row) => {
         if (error) {
           throw error;
         }
       }
     );
-    res.status(201).send({ express: `update successful for ${req.query.id}` });
-  }
-});
 
-app.put("/memeDelete", (req, res, next) => {
-  db.run(`DELETE FROM Memes WHERE id=${req.query.id}`, error => {
-    if (error) {
-      throw error;
-    }
+    db.get(
+      "SELECT * FROM memeChanges WHERE id=last_insert_rowid()",
+      (error, changeRows) => {
+        if (error) {
+          throw error;
+        }
+
+        res.status(201).send({
+          express: `Delete successful for ${req.query.id}`,
+          change: changeRows
+        });
+      }
+    );
   });
-  res.status(201).send({ express: `Delete successful for ${req.query.id}` });
 });
 
 //It listens here and we established the port at the top of the file

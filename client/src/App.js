@@ -14,6 +14,7 @@ class App extends Component {
       response: "",
       heck: "",
       memeData: [],
+      changeData: [],
       lastID: 0,
       PUTID: 0,
       PUTMemeText: "",
@@ -41,6 +42,20 @@ class App extends Component {
         }
       })
       .catch(err => console.log(err));
+
+    this.callMemeChanges().then(res => {
+      for (let memeIndex = 0; memeIndex < res.express.length; memeIndex++) {
+        this.state.changeData.push(
+          <tr key={res.express[memeIndex].id}>
+            <td>{res.express[memeIndex].id}</td>
+            <td>{res.express[memeIndex].date}</td>
+            <td>{res.express[memeIndex].memeId}</td>
+            <td>{res.express[memeIndex].newMemeText}</td>
+            <td>{res.express[memeIndex].newMemePic}</td>
+          </tr>
+        );
+      }
+    });
 
     //functions:
     this.handleHeck = this.handleHeck.bind(this);
@@ -128,6 +143,7 @@ the filterMemeData() function.*/
 
   checkMemeData() {
     console.log(this.state.memeData);
+    console.log(this.state.changeData);
   }
 
   //filterMemeData is made for the purpose of updating the table rows after
@@ -221,7 +237,8 @@ the filterMemeData() function.*/
     this.clearMemes().catch(err => console.log(err));
 
     this.setState({
-      memeData: []
+      memeData: [],
+      changeData: []
     });
   }
 
@@ -259,6 +276,15 @@ the filterMemeData() function.*/
             <td>{data.express.memePic}</td>
           </tr>
         );
+        this.state.changeData.push(
+          <tr key={data.change.id}>
+            <td>{data.change.id}</td>
+            <td>{data.change.date}</td>
+            <td>{data.change.memeId}</td>
+            <td>{data.change.newMemeText}</td>
+            <td>{data.change.newMemePic}</td>
+          </tr>
+        );
         this.setState({
           lastID: data.express.id
         });
@@ -282,7 +308,23 @@ the filterMemeData() function.*/
       ) {
         await fetch(`/memeDelete/?id=${this.state.deletePUTID}`, {
           method: "PUT"
-        }).then(res => res.json().then(data => console.log(data)));
+        }).then(res =>
+          res.json().then(data => {
+            console.log(data.express);
+            this.setState({
+              changeData: [
+                ...this.state.changeData,
+                <tr key={data.change.id}>
+                  <td>{data.change.id}</td>
+                  <td>{data.change.date}</td>
+                  <td>{data.change.memeId}</td>
+                  <td>{data.change.newMemeText}</td>
+                  <td>{data.change.newMemePic}</td>
+                </tr>
+              ]
+            });
+          })
+        );
       } else {
         alert("ID does not corrispond to a row");
         throw new Error("ID mismatch");
@@ -320,7 +362,19 @@ the filterMemeData() function.*/
           }
         ).then(res =>
           res.json().then(data => {
-            console.log(data);
+            console.log(data.express);
+            this.setState({
+              changeData: [
+                ...this.state.changeData,
+                <tr key={data.change.id}>
+                  <td>{data.change.id}</td>
+                  <td>{data.change.date}</td>
+                  <td>{data.change.memeId}</td>
+                  <td>{data.change.newMemeText}</td>
+                  <td>{data.change.newMemePic}</td>
+                </tr>
+              ]
+            });
           })
         );
       } else if (
@@ -334,7 +388,19 @@ the filterMemeData() function.*/
           }
         ).then(res =>
           res.json().then(data => {
-            console.log(data);
+            console.log(data.express);
+            this.setState({
+              changeData: [
+                ...this.state.changeData,
+                <tr key={data.change.id}>
+                  <td>{data.change.id}</td>
+                  <td>{data.change.date}</td>
+                  <td>{data.change.memeId}</td>
+                  <td>{data.change.newMemeText}</td>
+                  <td />
+                </tr>
+              ]
+            });
           })
         );
       } else if (
@@ -348,7 +414,19 @@ the filterMemeData() function.*/
           }
         ).then(res =>
           res.json().then(data => {
-            console.log(data);
+            console.log(data.express);
+            this.setState({
+              changeData: [
+                ...this.state.changeData,
+                <tr key={data.change.id}>
+                  <td>{data.change.id}</td>
+                  <td>{data.change.date}</td>
+                  <td>{data.change.memeId}</td>
+                  <td />
+                  <td>{data.change.newMemePic}</td>
+                </tr>
+              ]
+            });
           })
         );
       } else if (
@@ -418,6 +496,19 @@ the filterMemeData() function.*/
   //trs
   callMemeData = async () => {
     const response = await fetch("/api/memeData");
+    const body = await response.json();
+
+    if (response.status !== 200) throw Error(body.message);
+
+    return body;
+  };
+
+  /* After the GET, POST, PUT, and DELETE requests to the front end, server, and SQL TABLE
+  had been made to work as I wanted - I wanted to keep a change log. Every item that gets
+  posted, changed, or deleted has a time stamp and a way to identify the meme that
+  was manipulated*/
+  callMemeChanges = async () => {
+    const response = await fetch("/memeChanges");
     const body = await response.json();
 
     if (response.status !== 200) throw Error(body.message);
@@ -509,6 +600,20 @@ the filterMemeData() function.*/
           <br />
           <button onClick={this.handleMemeDelete}>Delete row</button>
         </form>
+        <br />
+        <br />
+        <table>
+          <thead>
+            <tr>
+              <th>id</th>
+              <th>date</th>
+              <th>meme Id</th>
+              <th>meme text</th>
+              <th>meme pic</th>
+            </tr>
+          </thead>
+          <tbody>{this.state.changeData}</tbody>
+        </table>
       </div>
     );
   }
