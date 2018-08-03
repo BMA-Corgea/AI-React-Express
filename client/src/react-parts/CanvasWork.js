@@ -35,11 +35,6 @@ export class CanvasWork extends React.Component {
 
   render() {
     let canvas = document.getElementById(this.state.canvasProp);
-    let c;
-
-    if (canvas !== null) {
-      c = canvas.getContext("2d");
-    }
 
     return (
       <div>

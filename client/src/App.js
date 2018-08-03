@@ -273,22 +273,26 @@ the filterMemeData() function.*/
       }
     ).then(res =>
       res.json().then(data => {
-        this.state.memeData.push(
-          <tr key={data.express.id}>
-            <td>{data.express.id}</td>
-            <td>{data.express.memeText}</td>
-            <td>{data.express.memePic}</td>
-          </tr>
-        );
-        this.state.changeData.push(
-          <tr key={data.change.id}>
-            <td>{data.change.id}</td>
-            <td>{data.change.date}</td>
-            <td>{data.change.memeId}</td>
-            <td>{data.change.newMemeText}</td>
-            <td>{data.change.newMemePic}</td>
-          </tr>
-        );
+        this.setState({
+          memeData: [
+            ...this.state.memeData,
+            <tr key={data.express.id}>
+              <td>{data.express.id}</td>
+              <td>{data.express.memeText}</td>
+              <td>{data.express.memePic}</td>
+            </tr>
+          ],
+          changeData: [
+            ...this.state.changeData,
+            <tr key={data.change.id}>
+              <td>{data.change.id}</td>
+              <td>{data.change.date}</td>
+              <td>{data.change.memeId}</td>
+              <td>{data.change.newMemeText}</td>
+              <td>{data.change.newMemePic}</td>
+            </tr>
+          ]
+        });
         this.setState({
           lastID: data.express.id
         });
