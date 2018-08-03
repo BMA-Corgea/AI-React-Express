@@ -60,6 +60,7 @@ app.get("/memeChanges", (req, res) => {
 
 //rather simple because nothing needs to be sent back. This is just copy and pasted
 //sqlite3 jargon
+//It is the same code posted twice for the two tables
 app.get("/memeClear", (req, res) => {
   db.serialize(() => {
     db.run("DROP TABLE IF EXISTS Memes", error => {
@@ -99,6 +100,9 @@ app.get("/memeClear", (req, res) => {
 //It takes information from the query (the url)
 //Then we get the row id for the item we just made via last_insert_rowid() which is an SQL function
 //the 201 status is sent back with the entire row from the last rowid
+/* The 201 status is now send in a get of the latest change log query.
+this is done so that the id of the change log and a time stamp can be sent to the front end
+Lines 123-147 are change log additions*/
 app.post("/memePost/", (req, res, next) => {
   db.serialize(() => {
     db.run(
@@ -151,6 +155,8 @@ app.post("/memePost/", (req, res, next) => {
 //it will do a db.run for which ever field is filled in.
 //the db.run is a simple UPDATE function on the SQL table. If you have followed this far
 //the function should make intuitive sense.
+/*The change log has been added to all 3 conditions of the PUT. For more understanding
+check the comment above the POST (103) */
 app.put("/memePUT", (req, res, next) => {
   if (
     typeof req.query.memeText !== "undefined" &&
@@ -289,6 +295,8 @@ app.put("/memePUT", (req, res, next) => {
   }
 });
 
+/*Delete updates the change log, it doesn't need to get sent back because
+the two rows just say DELETE instead of a value. */
 app.put("/memeDelete", (req, res, next) => {
   db.serialize(() => {
     db.run(`DELETE FROM Memes WHERE id=${req.query.id}`, error => {

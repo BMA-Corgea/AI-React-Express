@@ -43,6 +43,7 @@ class App extends Component {
       })
       .catch(err => console.log(err));
 
+    //This copy paste fills out the original change log
     this.callMemeChanges().then(res => {
       for (let memeIndex = 0; memeIndex < res.express.length; memeIndex++) {
         this.state.changeData.push(
@@ -261,6 +262,9 @@ the filterMemeData() function.*/
   //4 responses.
   //It then goes onto making the return data from the server (which is what we sent plus an id)
   //into a table row that is put into the front end.
+  /* Line 314 has a handle for the change log. The server now sends two objects in
+  the JSON object, the post and the change. The change is a query from the change log
+  table that has a timestamp for the post. This helps track the previous states of each meme*/
   postMeme = async () => {
     await fetch(
       `/memePost/?memeText=${this.pickResponse()}&memePic=${this.pickPic()}`,
@@ -293,6 +297,8 @@ the filterMemeData() function.*/
     );
   };
 
+  /*Delete meme now updates the change log with a row with data
+  from a query from a second table*/
   deleteMeme = async () => {
     if (this.state.deletePUTID < 1) {
       alert("ID must be above 0");
@@ -337,6 +343,7 @@ the filterMemeData() function.*/
   //The first part is making sure the ID corrisponds to something in the SQL Database
   //The second part is different PUT requests for the 4 different scenarios
   //If both are blank it will call you out on it.
+  /*Each put will now update the change log for example 373*/
   memePUT = async () => {
     if (this.state.PUTID < 1) {
       alert("ID must be above 0");
