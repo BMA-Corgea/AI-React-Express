@@ -13,4 +13,19 @@ const currentTime =
   ":" +
   today.getSeconds();
 
-console.log(currentTime);
+function makeTimeStamp() {
+  let month = today.getMonth() + 1;
+  let day = today.getDate();
+  let year = today.getFullYear();
+  let hour = today.getHours();
+  let minute = today.getMinutes();
+  let second = today.getSeconds();
+
+  return (
+    month + "/" + day + "/" + year + " at " + hour + ":" + minute + ":" + second
+  );
+}
+
+console.log(makeTimeStamp());
+
+module.exports = { currentTime, makeTimeStamp };

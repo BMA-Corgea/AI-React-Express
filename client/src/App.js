@@ -21,7 +21,8 @@ class App extends Component {
       PUTMemePic: "",
       originalMemeText: "",
       originalMemePic: "",
-      deletePUTID: 0
+      deletePUTID: 0,
+      CSVObject: []
     };
 
     //this initially fills out the table with all the data from the SQL databse
@@ -58,6 +59,8 @@ class App extends Component {
       }
     });
 
+    this.fillCSVObject();
+
     //functions:
     this.handleHeck = this.handleHeck.bind(this);
     this.pickResponse = this.pickResponse.bind(this);
@@ -75,7 +78,31 @@ class App extends Component {
     this.handleMemeDelete = this.handleMemeDelete.bind(this);
     this.updatedDeletePUTID = this.updatedDeletePUTID.bind(this);
     this.findMemeInArray = this.findMemeInArray.bind(this);
+    this.fillCSVObject = this.fillCSVObject.bind(this);
   }
+
+  /* One big part of filling a table is being able to fill it in masse. The ways
+I have done this in a professional setting is with CSV files (though in my position
+we have an app that can use a regular excel file). I want to first see a CSV output
+appear on screen. After that, it will just need to be parsed like any other information
+with for loops, post/put requests, and the like*/
+  fillCSVObject() {
+    this.CSVArrayFill()
+      .then(res =>
+        this.setState({
+          CSVObject: res.express
+        })
+      )
+      .catch(err => console.log(err));
+  }
+
+  /*Get request for a CSV */
+  CSVArrayFill = async () => {
+    const response = await fetch("/getCSV/");
+    const body = await response.json();
+
+    return body;
+  };
 
   handleMemeDelete(event) {
     this.deleteMeme()
@@ -625,6 +652,11 @@ the filterMemeData() function.*/
           </thead>
           <tbody>{this.state.changeData}</tbody>
         </table>
+        <br />
+        <br />
+        <h3>This is from a CSV File:</h3>
+        <br />
+        <p>{this.state.CSVObject}</p>
       </div>
     );
   }

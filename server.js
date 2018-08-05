@@ -7,20 +7,8 @@ const {
   logNodeError,
   printQueryResults
 } = require("./utils");
-const today = new Date();
-const currentTime =
-  today.getMonth() +
-  1 +
-  "/" +
-  today.getDate() +
-  "/" +
-  today.getFullYear() +
-  " at " +
-  today.getHours() +
-  ":" +
-  today.getMinutes() +
-  ":" +
-  today.getSeconds();
+const { currentTime, makeTimeStamp } = require("./currentDateInConsoleLog");
+const fs = require("fs");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -33,6 +21,15 @@ app.get("/api/hello", (req, res) => {
 //also incredibly simple, this was was for a button instead
 app.get("/api/heck", (req, res) => {
   res.send({ express: "What the HECK?!" });
+});
+
+app.get("/getCSV", (req, res) => {
+  const CSVReadStream = fs.createReadStream("./Excel_Work/Book1.csv", "utf8");
+
+  CSVReadStream.on("data", function(chunk) {
+    console.log(chunk);
+    res.send({ express: chunk });
+  });
 });
 
 //this is when express talks to the SQL data table "Memes"
@@ -122,7 +119,7 @@ app.post("/memePost/", (req, res, next) => {
       }
 
       db.run(
-        `INSERT INTO memeChanges (date, memeId, newMemeText, newMemePic) VALUES ("${currentTime}", "${
+        `INSERT INTO memeChanges (date, memeId, newMemeText, newMemePic) VALUES ("${makeTimeStamp()}", "${
           row.id
         }", "${req.query.memeText}", "${req.query.memePic}")`,
         (error, changeRow) => {
