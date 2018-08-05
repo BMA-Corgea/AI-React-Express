@@ -26,10 +26,31 @@ app.get("/api/heck", (req, res) => {
 app.get("/getCSV", (req, res) => {
   const CSVReadStream = fs.createReadStream("./Excel_Work/Book1.csv", "utf8");
 
+  const output = fs
+    .readFileSync("./Excel_Work/Book1.csv", "utf8")
+    .trim()
+    .split("\r\n")
+    .map(line => line.split(","))
+    .reduce((memes, line) => {
+      memes[line[0]] = [];
+      memes[line[0]].push({
+        memeId: line[0],
+        memeText: line[1],
+        memePic: line[2]
+      });
+      return memes;
+    });
+
+  console.log(output);
+
+  res.send({ express: output });
+
+  /*
   CSVReadStream.on("data", function(chunk) {
     console.log(chunk);
-    res.send({ express: chunk });
+        res.send({ express: chunk });
   });
+  */
 });
 
 //this is when express talks to the SQL data table "Memes"

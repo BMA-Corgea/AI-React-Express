@@ -88,11 +88,7 @@ appear on screen. After that, it will just need to be parsed like any other info
 with for loops, post/put requests, and the like*/
   fillCSVObject() {
     this.CSVArrayFill()
-      .then(res =>
-        this.setState({
-          CSVObject: res.express
-        })
-      )
+      .then(res => console.log(res.express))
       .catch(err => console.log(err));
   }
 
