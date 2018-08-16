@@ -26,22 +26,35 @@ app.get("/api/heck", (req, res) => {
 app.get("/getCSV", (req, res) => {
   const CSVReadStream = fs.createReadStream("./Excel_Work/Book1.csv", "utf8");
 
+  const fullFile = fs
+    .readFileSync("./Excel_Work/Book1.csv", "utf8")
+    .trim()
+    .split("\r\n")
+    .map(line => line.split(","));
+
+  for (memeIndex = 0; memeIndex < fullFile[0].length; memeIndex++) {
+    console.log(fullFile[0][memeIndex]);
+  }
+
   const output = fs
     .readFileSync("./Excel_Work/Book1.csv", "utf8")
     .trim()
     .split("\r\n")
     .map(line => line.split(","))
     .reduce((memes, line) => {
-      memes[line[0]] = [];
-      memes[line[0]].push({
+      niceMeme = [];
+      experimentMeme = [];
+
+      niceMeme.push({
         memeId: line[0],
         memeText: line[1],
         memePic: line[2]
       });
+
+      memes.push([...niceMeme]);
+
       return memes;
     });
-
-  console.log(output);
 
   res.send({ express: output });
 

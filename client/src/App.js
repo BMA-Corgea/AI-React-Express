@@ -22,7 +22,8 @@ class App extends Component {
       originalMemeText: "",
       originalMemePic: "",
       deletePUTID: 0,
-      CSVObject: []
+      CSVObject: [],
+      CSVTableBody: []
     };
 
     //this initially fills out the table with all the data from the SQL databse
@@ -88,7 +89,33 @@ appear on screen. After that, it will just need to be parsed like any other info
 with for loops, post/put requests, and the like*/
   fillCSVObject() {
     this.CSVArrayFill()
-      .then(res => console.log(res.express))
+      .then(res => {
+        const objectParse = res.express.filter(meme => {
+          return typeof meme !== "string";
+        });
+
+        for (let memeIndex = 0; memeIndex < objectParse.length; memeIndex++) {
+          this.setState({
+            CSVObject: [
+              ...this.state.CSVObject,
+              <div key={memeIndex}>{objectParse[memeIndex][0].memeId}</div>
+            ]
+          });
+        }
+
+        for (let memeIndex = 0; memeIndex < objectParse.length; memeIndex++) {
+          this.setState({
+            CSVTableBody: [
+              ...this.state.CSVTableBody,
+              <tr key={memeIndex}>
+                <td>{objectParse[memeIndex][0].memeId}</td>
+                <td>{objectParse[memeIndex][0].memePic}</td>
+                <td>{objectParse[memeIndex][0].memeText}</td>
+              </tr>
+            ]
+          });
+        }
+      })
       .catch(err => console.log(err));
   }
 
@@ -134,7 +161,7 @@ with for loops, post/put requests, and the like*/
   }
 
   /* This is simple enough, it is the three different scenarios that are possible
-after the put request. It just makes sure that, if one of the form sections is blank
+after the put request. It just makes sure that if one of the form sections is blank
 that it will keep the original value. The state for originalMemeText/Pic is handled in
 the filterMemeData() function.*/
   handleFilterScenarios() {
@@ -652,7 +679,17 @@ the filterMemeData() function.*/
         <br />
         <h3>This is from a CSV File:</h3>
         <br />
-        <p>{this.state.CSVObject}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Meme Id</th>
+              <th>Meme Pic</th>
+              <th>Meme Text</th>
+            </tr>
+          </thead>
+          <tbody>{this.state.CSVTableBody}</tbody>
+        </table>
+        {this.state.CSVObject}
       </div>
     );
   }
