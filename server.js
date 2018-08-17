@@ -32,31 +32,34 @@ app.get("/getCSV", (req, res) => {
     .split("\r\n")
     .map(line => line.split(","));
 
-  for (memeIndex = 0; memeIndex < fullFile[0].length; memeIndex++) {
-    console.log(fullFile[0][memeIndex]);
-  }
-
   const output = fs
     .readFileSync("./Excel_Work/Book1.csv", "utf8")
     .trim()
     .split("\r\n")
     .map(line => line.split(","))
     .reduce((memes, line) => {
-      niceMeme = [];
+      titles = [];
+      object = {};
       experimentMeme = [];
 
-      niceMeme.push({
-        memeId: line[0],
-        memeText: line[1],
-        memePic: line[2]
+      titles = memes.filter(meme => {
+        return typeof meme === "string";
       });
 
-      memes.push([...niceMeme]);
+      for (memeIndex = 0; memeIndex < titles.length; memeIndex++) {
+        object[titles[memeIndex]] = line[memeIndex];
+      }
+
+      memes.push(object);
 
       return memes;
     });
 
-  res.send({ express: output });
+  let outputParse = output.filter(meme => {
+    return typeof meme !== "string";
+  });
+
+  res.send({ express: outputParse });
 
   /*
   CSVReadStream.on("data", function(chunk) {

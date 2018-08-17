@@ -2,7 +2,7 @@ import React, { Component } from "react";
 //not particularly important, this was supposed to be AI before I changed to working with SQL first
 import { CanvasWork } from "./react-parts/CanvasWork.js";
 import logo from "./logo.svg";
-
+import { TableData } from "./react-parts/TableData.js";
 import "./App.css";
 
 class App extends Component {
@@ -22,7 +22,6 @@ class App extends Component {
       originalMemeText: "",
       originalMemePic: "",
       deletePUTID: 0,
-      CSVObject: [],
       CSVTableBody: []
     };
 
@@ -90,31 +89,13 @@ with for loops, post/put requests, and the like*/
   fillCSVObject() {
     this.CSVArrayFill()
       .then(res => {
-        const objectParse = res.express.filter(meme => {
-          return typeof meme !== "string";
+        this.setState({
+          CSVTableBody: [res.express[2]]
         });
 
-        for (let memeIndex = 0; memeIndex < objectParse.length; memeIndex++) {
-          this.setState({
-            CSVObject: [
-              ...this.state.CSVObject,
-              <div key={memeIndex}>{objectParse[memeIndex][0].memeId}</div>
-            ]
-          });
-        }
+        for (let memeIndex = 0; memeIndex < res.express.length; memeIndex++) {}
 
-        for (let memeIndex = 0; memeIndex < objectParse.length; memeIndex++) {
-          this.setState({
-            CSVTableBody: [
-              ...this.state.CSVTableBody,
-              <tr key={memeIndex}>
-                <td>{objectParse[memeIndex][0].memeId}</td>
-                <td>{objectParse[memeIndex][0].memePic}</td>
-                <td>{objectParse[memeIndex][0].memeText}</td>
-              </tr>
-            ]
-          });
-        }
+        for (let memeIndex = 0; memeIndex < res.express.length; memeIndex++) {}
       })
       .catch(err => console.log(err));
   }
@@ -687,7 +668,9 @@ the filterMemeData() function.*/
               <th>Meme Text</th>
             </tr>
           </thead>
-          <tbody>{this.state.CSVTableBody}</tbody>
+          <tbody>
+            <TableData TableKey={1} data={this.state.CSVTableBody} />
+          </tbody>
         </table>
         {this.state.CSVObject}
       </div>
