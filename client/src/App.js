@@ -22,7 +22,8 @@ class App extends Component {
       originalMemeText: "",
       originalMemePic: "",
       deletePUTID: 0,
-      CSVTableBody: []
+      CSVTableBody: [],
+      CSVTableHeaders: []
     };
 
     //this initially fills out the table with all the data from the SQL databse
@@ -89,13 +90,42 @@ with for loops, post/put requests, and the like*/
   fillCSVObject() {
     this.CSVArrayFill()
       .then(res => {
-        this.setState({
-          CSVTableBody: [res.express[2]]
-        });
+        for (let memeIndex = 0; memeIndex < res.titles.length; memeIndex++) {
+          this.setState({
+            CSVTableHeaders: [
+              ...this.state.CSVTableHeaders,
+              <th key={memeIndex}>{res.titles[memeIndex]}</th>
+            ]
+          });
+        }
 
-        for (let memeIndex = 0; memeIndex < res.express.length; memeIndex++) {}
+        for (let memeIndex = 0; memeIndex < res.express.length; memeIndex++) {
+          let tableRow = [];
 
-        for (let memeIndex = 0; memeIndex < res.express.length; memeIndex++) {}
+          for (
+            let keyCounter = 0;
+            keyCounter < Object.keys(res.express[0]).length;
+            keyCounter++
+          ) {
+            tableRow.push(
+              <TableData
+                key={keyCounter}
+                tableKey={keyCounter}
+                dataPoint={
+                  res.express[memeIndex][
+                    Object.keys(res.express[memeIndex])[keyCounter]
+                  ]
+                }
+              />
+            );
+          }
+          this.setState({
+            CSVTableBody: [
+              ...this.state.CSVTableBody,
+              <tr key={memeIndex}>{tableRow}</tr>
+            ]
+          });
+        }
       })
       .catch(err => console.log(err));
   }
@@ -662,15 +692,9 @@ the filterMemeData() function.*/
         <br />
         <table>
           <thead>
-            <tr>
-              <th>Meme Id</th>
-              <th>Meme Pic</th>
-              <th>Meme Text</th>
-            </tr>
+            <tr>{this.state.CSVTableHeaders}</tr>
           </thead>
-          <tbody>
-            <TableData TableKey={1} data={this.state.CSVTableBody} />
-          </tbody>
+          <tbody>{this.state.CSVTableBody}</tbody>
         </table>
         {this.state.CSVObject}
       </div>

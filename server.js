@@ -59,7 +59,14 @@ app.get("/getCSV", (req, res) => {
     return typeof meme !== "string";
   });
 
-  res.send({ express: outputParse });
+  let titleParse = output.filter(meme => {
+    return typeof meme === "string";
+  });
+
+  res.send({
+    express: outputParse,
+    titles: titleParse
+  });
 
   /*
   CSVReadStream.on("data", function(chunk) {
