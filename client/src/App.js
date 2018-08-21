@@ -3,6 +3,7 @@ import React, { Component } from "react";
 import { CanvasWork } from "./react-parts/CanvasWork.js";
 import logo from "./logo.svg";
 import { TableData } from "./react-parts/TableData.js";
+import { QueryTable } from "./react-parts/QueryTable.js";
 import "./App.css";
 
 class App extends Component {
@@ -81,6 +82,8 @@ class App extends Component {
     this.findMemeInArray = this.findMemeInArray.bind(this);
     this.fillCSVObject = this.fillCSVObject.bind(this);
   }
+
+  Qualifiers = ["EQUALS", "CONTAINS", "DOES NOT EQUAL", "DOES NOT CONTAIN"];
 
   /* One big part of filling a table is being able to fill it in masse. The ways
 I have done this in a professional setting is with CSV files (though in my position
@@ -638,7 +641,7 @@ the filterMemeData() function.*/
         <h1>{this.state.heck}</h1>
         <button onClick={this.handleHeck}>What the Heck?</button>
         <CanvasWork canvasId="wewew" />
-        <p>This is the meme data:</p>
+        <h1>This is the meme data:</h1>
         <table>
           <thead>
             <tr>
@@ -649,6 +652,9 @@ the filterMemeData() function.*/
           </thead>
           <tbody>{this.state.memeData}</tbody>
         </table>
+        <br />
+        <br />
+        <h3>This is manupulation of the data table:</h3>
         <button onClick={this.addMeme}>Add a row to table</button>
         <button onClick={this.memeClear}>Clear all rows</button>
         <button onClick={this.checkUpdate}>Check for updated list</button>
@@ -674,6 +680,7 @@ the filterMemeData() function.*/
         </form>
         <br />
         <br />
+        <h3>This is the table of changes to the data table</h3>
         <table>
           <thead>
             <tr>
@@ -696,7 +703,10 @@ the filterMemeData() function.*/
           </thead>
           <tbody>{this.state.CSVTableBody}</tbody>
         </table>
-        {this.state.CSVObject}
+        <br />
+        <br />
+        <h3>Query the table here:</h3>
+        <QueryTable />
       </div>
     );
   }
