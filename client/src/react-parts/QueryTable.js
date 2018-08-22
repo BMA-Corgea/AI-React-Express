@@ -1,6 +1,17 @@
 import React from "react";
 import { QueryLine } from "./QueryLine";
 
+/*This is the meat and potatoes of the query system. This is responsible
+for conglomerating all the different queries into a single state array.
+First, you have the functions that add or delete a line. This not only
+has to delete the JSX, but it also has to delete the object that is responsible
+for all the pertinent information that can be selected from the JSX.
+This is the difference between the queries and the queryConditions. A queryCount
+is added to make sure each query is unique so we can tell which one is being
+manipulated. This way, when handleQueryValues is fired by any one of the
+query lines, it can match the id to the same id (shown as count) on the line.
+Once it is matched, it will change all the values to the values that have been
+sent over from the query line.*/
 export class QueryTable extends React.Component {
   constructor(props) {
     super(props);

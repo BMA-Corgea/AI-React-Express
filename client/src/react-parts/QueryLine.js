@@ -1,6 +1,13 @@
 import React from "react";
 import { DropDownTable } from "./DropDownTable.js";
 
+/*This is a single unit of query. The idea was to have a cascade
+of different qualities to search for at the same time by having many
+of these. This keeps track of two drop down tables: one for each field
+then one for each qualifier. You then put what you want of that field as
+an input. So, for example, you can search "meme text EQUALS 'hello world'"
+Notice the setState on line 27 has a callback. This is so the asynchronous
+stateSet happens before it sends the full state off to the parent.*/
 export class QueryLine extends React.Component {
   constructor(props) {
     super(props);
