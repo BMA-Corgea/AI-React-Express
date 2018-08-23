@@ -5,8 +5,8 @@
   "dependencies": {
     "body-parser": "^1.18.3",
     "express": "^4.16.2",
-    "react": "^16.4.1",
-    "react-dom": "^16.4.1",
+    "react": "^16.4.2",
+    "react-dom": "^16.4.2",
     "react-scripts": "1.1.4"
   },
   "scripts": {
@@ -19,7 +19,7 @@
     "dev": "concurrently --kill-others-on-fail \"npm run server\" \"npm run client\""
   },
   "devDependencies": {
-    "concurrently": "^3.5.0",
+    "concurrently": "^3.6.1",
     "sqlite3": "^4.0.2"
   }
 }
