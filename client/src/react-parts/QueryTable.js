@@ -51,7 +51,13 @@ export class QueryTable extends React.Component {
     console.log(this.state.queryConditions);
   }
 
-  executeQuery(event) {}
+  executeQuery(event) {
+    if (this.state.queries.length < 1) {
+      alert("Please enter a query");
+    } else {
+      this.props.sendQuery(this.state);
+    }
+  }
 
   deleteQuery(event) {
     this.setState({

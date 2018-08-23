@@ -24,7 +24,9 @@ class App extends Component {
       originalMemePic: "",
       deletePUTID: 0,
       CSVTableBody: [],
-      CSVTableHeaders: []
+      CSVTableHeaders: [],
+      numberFound: 0,
+      sentQueryTable: []
     };
 
     //this initially fills out the table with all the data from the SQL databse
@@ -81,7 +83,29 @@ class App extends Component {
     this.updatedDeletePUTID = this.updatedDeletePUTID.bind(this);
     this.findMemeInArray = this.findMemeInArray.bind(this);
     this.fillCSVObject = this.fillCSVObject.bind(this);
+    this.handleSentQuery = this.handleSentQuery.bind(this);
   }
+
+  //Once the Query table has been fired, we send a query to the data table
+  handleSentQuery(sentQuery) {
+    this.queryDataTable(sentQuery).then(res => {
+      console.log(res);
+    });
+  }
+
+  //This is the request to the express server
+  queryDataTable = async sentQuery => {
+    const response = await fetch("/sendQuery/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain"
+      },
+      body: sentQuery
+    });
+    const body = await response.json();
+
+    return body;
+  };
 
   Qualifiers = ["EQUALS", "CONTAINS", "DOES NOT EQUAL", "DOES NOT CONTAIN"];
 
@@ -706,7 +730,23 @@ the filterMemeData() function.*/
         <br />
         <br />
         <h3>Query the table here:</h3>
-        <QueryTable />
+        <QueryTable sendQuery={this.handleSentQuery} />
+        <br />
+        <br />
+        <h3>These are the results of the query:</h3>
+        <p>
+          Number of results found: <strong>{this.state.numberFound}</strong>
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Meme Id</th>
+              <th>Meme Text</th>
+              <th>Meme Pic</th>
+            </tr>
+          </thead>
+          <tbody>{this.state.sentQueryTable}</tbody>
+        </table>
       </div>
     );
   }

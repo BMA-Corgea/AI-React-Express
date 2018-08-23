@@ -9,9 +9,22 @@ const {
 } = require("./utils");
 const { currentTime, makeTimeStamp } = require("./currentDateInConsoleLog");
 const fs = require("fs");
+const bodyParser = require("body-parser");
 
 const app = express();
 const port = process.env.PORT || 5000;
+
+/*I'm not sure what this does yet, but it makes post requests able to
+carry a body into the server. This is entirely necessary for the
+use of a query system*/
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
+//this recieves a query to the database and sends back a subset of the full data table
+app.post("/sendQuery", (req, res) => {
+  console.log(req.body);
+  res.send({ express: req.body });
+});
 
 //the most basic express req res you will ever see
 app.get("/api/hello", (req, res) => {
