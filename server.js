@@ -55,7 +55,6 @@ function orParse(orString, condIndex) {
 
 //this recieves a query to the database and sends back a subset of the full data table
 app.post("/sendQuery", (req, res) => {
-  console.log(req.body);
   let queryParse = "SELECT * FROM Memes WHERE ";
 
   for (
