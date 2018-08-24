@@ -88,9 +88,33 @@ class App extends Component {
 
   //Once the Query table has been fired, we send a query to the data table
   handleSentQuery(sentQuery) {
-    this.queryDataTable(sentQuery).then(res => {
-      console.log(res);
-    });
+    this.setState(
+      {
+        numberFound: 0,
+        sentQueryTable: []
+      },
+      () => {
+        this.queryDataTable(sentQuery)
+          .then(res => {
+            for (let resIndex = 0; resIndex < res.express.length; resIndex++) {
+              this.setState({
+                numberFound: res.express.length,
+                sentQueryTable: [
+                  ...this.state.sentQueryTable,
+                  <tr key={resIndex}>
+                    <td>{res.express[resIndex].id}</td>
+                    <td>{res.express[resIndex].memeText}</td>
+                    <td>{res.express[resIndex].memePic}</td>
+                  </tr>
+                ]
+              });
+            }
+          })
+          .catch(err => {
+            console.log(err);
+          });
+      }
+    );
   }
 
   //This is the request to the express server
@@ -98,9 +122,9 @@ class App extends Component {
     const response = await fetch("/sendQuery/", {
       method: "POST",
       headers: {
-        "Content-Type": "text/plain"
+        "Content-Type": "application/json"
       },
-      body: sentQuery
+      body: JSON.stringify(sentQuery)
     });
     const body = await response.json();
 

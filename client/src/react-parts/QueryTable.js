@@ -35,7 +35,8 @@ export class QueryTable extends React.Component {
             id: Object.values(meme)[0],
             field: Object.values(values)[0],
             qualifier: Object.values(values)[1],
-            input: Object.values(values)[2]
+            input: Object.values(values)[2],
+            or: Object.values(values)[4]
           };
         } else {
           return meme;
@@ -68,7 +69,8 @@ export class QueryTable extends React.Component {
         return (
           String(Object.values(meme)[0]) !== event.target.id.split("button")[1]
         );
-      })
+      }),
+      queryCount: this.state.queryCount - 1
     });
   }
 

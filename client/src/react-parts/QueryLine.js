@@ -16,12 +16,25 @@ export class QueryLine extends React.Component {
       currentField: "Meme Id",
       currentQualifier: "EQUALS",
       currentInput: "",
-      count: this.props.count
+      count: this.props.count,
+      currentOr: ""
     };
 
     this.handleField = this.handleField.bind(this);
     this.handleQualifier = this.handleQualifier.bind(this);
     this.handleInput = this.handleInput.bind(this);
+    this.handleOr = this.handleOr.bind(this);
+  }
+
+  handleOr(Or) {
+    this.setState(
+      {
+        currentOr: Or
+      },
+      () => {
+        this.props.values(this.state);
+      }
+    );
   }
 
   handleField(field) {
@@ -62,6 +75,7 @@ export class QueryLine extends React.Component {
   render() {
     return (
       <form>
+        <DropDownTable options={["", "OR"]} onChange={this.handleOr} />
         <DropDownTable
           options={["Meme Id", "Meme Text", "Meme Pic"]}
           onChange={this.handleField}

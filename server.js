@@ -17,13 +17,73 @@ const port = process.env.PORT || 5000;
 /*I'm not sure what this does yet, but it makes post requests able to
 carry a body into the server. This is entirely necessary for the
 use of a query system*/
-app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+
+function qualifierParse(qualifierString) {
+  if (qualifierString === "EQUALS") {
+    return "=";
+  } else if (qualifierString === "DOES NOT EQUAL") {
+    return "<>";
+  } else if (qualifierString === "CONTAINS") {
+    return " LIKE ";
+  } else if (qualifierString === "DOES NOT CONTAIN") {
+    return " NOT LIKE ";
+  }
+}
+
+function fieldParse(fieldString) {
+  if (fieldString === "Meme Id") {
+    return "id";
+  } else if (fieldString === "Meme Text") {
+    return "memeText";
+  } else if (fieldString === "Meme Pic") {
+    return "memePic";
+  }
+}
+
+function orParse(orString, condIndex) {
+  if (condIndex === 0) {
+    return "";
+  } else {
+    if (orString === "") {
+      return " AND ";
+    } else {
+      return " OR ";
+    }
+  }
+}
 
 //this recieves a query to the database and sends back a subset of the full data table
 app.post("/sendQuery", (req, res) => {
   console.log(req.body);
-  res.send({ express: req.body });
+  let queryParse = "SELECT * FROM Memes WHERE ";
+
+  for (
+    let condIndex = 0;
+    condIndex < req.body.queryConditions.length;
+    condIndex++
+  ) {
+    queryParse =
+      queryParse +
+      `${orParse(
+        req.body.queryConditions[condIndex].or,
+        condIndex
+      )}${fieldParse(
+        req.body.queryConditions[condIndex].field
+      )}${qualifierParse(req.body.queryConditions[condIndex].qualifier)}"${
+        req.body.queryConditions[condIndex].input
+      }"`;
+  }
+
+  db.all(queryParse, (error, rows) => {
+    if (error) {
+      throw error;
+    }
+
+    res.send({
+      express: rows
+    });
+  });
 });
 
 //the most basic express req res you will ever see
