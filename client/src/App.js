@@ -51,15 +51,18 @@ class App extends Component {
     //This copy paste fills out the original change log
     this.callMemeChanges().then(res => {
       for (let memeIndex = 0; memeIndex < res.express.length; memeIndex++) {
-        this.state.changeData.push(
-          <tr key={res.express[memeIndex].id}>
-            <td>{res.express[memeIndex].id}</td>
-            <td>{res.express[memeIndex].date}</td>
-            <td>{res.express[memeIndex].memeId}</td>
-            <td>{res.express[memeIndex].newMemeText}</td>
-            <td>{res.express[memeIndex].newMemePic}</td>
-          </tr>
-        );
+        this.setState({
+          changeData: [
+            ...this.state.changeData,
+            <tr key={res.express[memeIndex].id}>
+              <td>{res.express[memeIndex].id}</td>
+              <td>{res.express[memeIndex].date}</td>
+              <td>{res.express[memeIndex].memeId}</td>
+              <td>{res.express[memeIndex].newMemeText}</td>
+              <td>{res.express[memeIndex].newMemePic}</td>
+            </tr>
+          ]
+        });
       }
     });
 
