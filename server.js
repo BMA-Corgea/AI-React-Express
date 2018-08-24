@@ -14,11 +14,15 @@ const bodyParser = require("body-parser");
 const app = express();
 const port = process.env.PORT || 5000;
 
-/*I'm not sure what this does yet, but it makes post requests able to
-carry a body into the server. This is entirely necessary for the
-use of a query system*/
+/*Basically, middleware checks every request so that I don't need to
+repeat functions. In this case, the imported function checks requests
+for a body and, if it does have one, it can be observed by the express
+server as req.body*/
 app.use(bodyParser.json());
 
+/*These three functions translate the query table on the front end into information
+that the SQL database is able to recognize. Simple, elementary if statements whose
+return value is placed into the query string*/
 function qualifierParse(qualifierString) {
   if (qualifierString === "EQUALS") {
     return "=";
@@ -54,6 +58,10 @@ function orParse(orString, condIndex) {
 }
 
 //this recieves a query to the database and sends back a subset of the full data table
+/*The object is to take a JSON object of query requirements and turn it into a single
+string that queries the database. It starts with queryParse and the second half
+is like "id=2 AND memePic="WOW" OR memeText="DANG"
+Each part of the JSON object needs to be translated from the front end to the backend*/
 app.post("/sendQuery", (req, res) => {
   let queryParse = "SELECT * FROM Memes WHERE ";
 

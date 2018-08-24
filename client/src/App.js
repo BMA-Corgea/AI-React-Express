@@ -87,6 +87,12 @@ class App extends Component {
   }
 
   //Once the Query table has been fired, we send a query to the data table
+  /*This is relatively simple with the tools that I have built along the way,
+  First, the query state is set to 0 so that the query doesn't continue on
+  an earlier query. Then the function is called to ask the backend for the query
+  that is explained in the QueryTable react part. The results of that query
+  then get put into a table row by row and the number of results is recorded
+  at the top.*/
   handleSentQuery(sentQuery) {
     this.setState(
       {
@@ -118,6 +124,9 @@ class App extends Component {
   }
 
   //This is the request to the express server
+  /*Note that the header is necessary so that the express server can parse the body
+  and the body needs to be JSON.stringify-ed as well. With these two attributes,
+  the express server can access req.body with the help of body-parser*/
   queryDataTable = async sentQuery => {
     const response = await fetch("/sendQuery/", {
       method: "POST",
