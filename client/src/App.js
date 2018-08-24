@@ -37,13 +37,16 @@ class App extends Component {
             lastID: res.express[memeIndex].id
           });
 
-          this.state.memeData.push(
-            <tr key={res.express[memeIndex].id}>
-              <td>{res.express[memeIndex].id}</td>
-              <td>{res.express[memeIndex].memeText}</td>
-              <td>{res.express[memeIndex].memePic}</td>
-            </tr>
-          );
+          this.setState({
+            memeData: [
+              ...this.state.memeData,
+              <tr key={res.express[memeIndex].id}>
+                <td>{res.express[memeIndex].id}</td>
+                <td>{res.express[memeIndex].memeText}</td>
+                <td>{res.express[memeIndex].memePic}</td>
+              </tr>
+            ]
+          });
         }
       })
       .catch(err => console.log(err));
