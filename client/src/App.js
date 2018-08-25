@@ -26,7 +26,8 @@ class App extends Component {
       CSVTableBody: [],
       CSVTableHeaders: [],
       numberFound: 0,
-      sentQueryTable: []
+      sentQueryTable: [],
+      fileInput: {}
     };
 
     //this initially fills out the table with all the data from the SQL databse
@@ -90,7 +91,61 @@ class App extends Component {
     this.findMemeInArray = this.findMemeInArray.bind(this);
     this.fillCSVObject = this.fillCSVObject.bind(this);
     this.handleSentQuery = this.handleSentQuery.bind(this);
+    this.handleFileEnter = this.handleFileEnter.bind(this);
+    this.handleFileInput = this.handleFileInput.bind(this);
   }
+
+  /*This will set the state so that file enter can send the result of this function
+  to the express server*/
+  /*As of now, I have just discovered how to reference the file with the document
+  get id. The next step is to pass that over to the express server for digestion*/
+  handleFileInput(event) {
+    event.persist();
+    this.setState(
+      {
+        fileInput: event.target.value
+      },
+      () => {
+        console.log("this is the document get id");
+        console.log(document.getElementById("updateFile").files[0]);
+        console.log("this is the full event");
+        console.log(event);
+        console.log("this is the event target value");
+        console.log(event.target.value);
+        console.log("this is the state that is sent to Express");
+        console.log(this.state.fileInput);
+      }
+    );
+  }
+
+  /*The objective of this function is to be able to upload a CSV file that changes
+  the data table. The file gets uploaded here and then sent off to the Express
+  server where it can be digested and sent into the SQL database*/
+  handleFileEnter(event) {
+    this.sendFileEnter(this.state.fileInput)
+      .then(res => {
+        console.log("this is the result sent back from Express");
+        console.log(res);
+      })
+      .catch(err => console.log(err));
+
+    event.preventDefault();
+  }
+
+  /*This will send a POST request to the express server in order to send a CSV. This
+  will ultimately update the data table*/
+  sendFileEnter = async enterFile => {
+    const response = await fetch("/sendInputFile/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/csv"
+      },
+      body: enterFile
+    });
+    const body = await response.json();
+
+    return body;
+  };
 
   //Once the Query table has been fired, we send a query to the data table
   /*This is relatively simple with the tools that I have built along the way,
@@ -786,6 +841,13 @@ the filterMemeData() function.*/
           </thead>
           <tbody>{this.state.sentQueryTable}</tbody>
         </table>
+        <br />
+        <br />
+        <p>Upload a CSV to edit the table here:</p>
+        <form>
+          <input id="updateFile" type="file" onChange={this.handleFileInput} />
+          <button onClick={this.handleFileEnter}>Enter file</button>
+        </form>
       </div>
     );
   }
