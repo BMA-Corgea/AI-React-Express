@@ -21,11 +21,131 @@ server as req.body*/
 app.use(bodyParser.json());
 app.use(bodyParser.text({ type: "application/vnd.ms-excel" }));
 
+/*This function takes a CSV file and turns it into a JSON object that has all the
+headers as string and all the rows as objects*/
+function parseCSV(file) {
+  const output = file
+    .trim()
+    .split("\r\n")
+    .map(line => line.split(","))
+    .reduce((memes, line) => {
+      titles = [];
+      object = {};
+      experimentMeme = [];
+
+      titles = memes.filter(meme => {
+        return typeof meme === "string";
+      });
+
+      for (memeIndex = 0; memeIndex < titles.length; memeIndex++) {
+        object[titles[memeIndex]] = line[memeIndex];
+      }
+
+      memes.push(object);
+
+      return memes;
+    });
+
+  return output;
+}
+
+//returns truthy if string is blank
+function isntBlank(field) {
+  if (field === "") {
+    return false;
+  } else {
+    return true;
+  }
+}
+
+//decides whether to update memeText or memePic
+function whichColumn(columnIndex) {
+  if (columnIndex === "1") {
+    return "memeText";
+  } else if (columnIndex === "2") {
+    return "memePic";
+  }
+}
+
 /*This will take a file from the front end, check if it's a CSV, and send a response
 if it's not, but if it is a CSV, then it will update the data table and send a
 success response*/
 app.post("/sendInputFile", (req, res) => {
-  res.send({ express: req.body });
+  const output = parseCSV(req.body);
+
+  let outputParse = output.filter(meme => {
+    return typeof meme !== "string";
+  });
+
+  let titleParse = output.filter(meme => {
+    return typeof meme === "string";
+  });
+
+  res.send({
+    express: outputParse,
+    titles: titleParse
+  });
+});
+
+/*I want a warning to appear before I confirm a mass update. This way, I can
+check before I ruin everything*/
+app.post("/confirmInputFile", (req, res) => {
+  const output = parseCSV(req.body);
+
+  let outputParse = output.filter(meme => {
+    return typeof meme !== "string";
+  });
+
+  let titleParse = output.filter(meme => {
+    return typeof meme === "string";
+  });
+
+  for (let rowsIndex = 0; rowsIndex < outputParse.length; rowsIndex++) {
+    let rowData = [];
+
+    for (let columnIndex = 1; columnIndex < titleParse.length; columnIndex++) {
+      rowData.push(
+        outputParse[rowsIndex][Object.keys(outputParse[rowsIndex])[columnIndex]]
+      );
+      if (
+        isntBlank(
+          outputParse[rowsIndex][
+            Object.keys(outputParse[rowsIndex])[columnIndex]
+          ]
+        )
+      ) {
+        db.run(
+          `UPDATE Memes SET ${titleParse[columnIndex]} = "${
+            outputParse[rowsIndex][
+              Object.keys(outputParse[rowsIndex])[columnIndex]
+            ]
+          }" WHERE id = ${
+            outputParse[rowsIndex][Object.keys(outputParse[rowsIndex])[0]]
+          }`,
+          error => {
+            if (error) {
+              throw error;
+            }
+          }
+        );
+      }
+    }
+
+    db.run(
+      `INSERT INTO memeChanges (date, memeId, newMemeText, newMemePic) VALUES ("${makeTimeStamp()}", "${
+        outputParse[rowsIndex][Object.keys(outputParse[rowsIndex])[0]]
+      }", "${rowData[0]}", "${rowData[1]}" )`,
+      error => {
+        if (error) {
+          throw error;
+        }
+      }
+    );
+  }
+
+  res.send({
+    express: "Update complete!"
+  });
 });
 
 /*These three functions translate the query table on the front end into information
@@ -112,36 +232,7 @@ app.get("/api/heck", (req, res) => {
 });
 
 app.get("/getCSV", (req, res) => {
-  const CSVReadStream = fs.createReadStream("./Excel_Work/Book1.csv", "utf8");
-
-  const fullFile = fs
-    .readFileSync("./Excel_Work/Book1.csv", "utf8")
-    .trim()
-    .split("\r\n")
-    .map(line => line.split(","));
-
-  const output = fs
-    .readFileSync("./Excel_Work/Book1.csv", "utf8")
-    .trim()
-    .split("\r\n")
-    .map(line => line.split(","))
-    .reduce((memes, line) => {
-      titles = [];
-      object = {};
-      experimentMeme = [];
-
-      titles = memes.filter(meme => {
-        return typeof meme === "string";
-      });
-
-      for (memeIndex = 0; memeIndex < titles.length; memeIndex++) {
-        object[titles[memeIndex]] = line[memeIndex];
-      }
-
-      memes.push(object);
-
-      return memes;
-    });
+  const output = parseCSV(fs.readFileSync("./Excel_Work/Book1.csv", "utf8"));
 
   let outputParse = output.filter(meme => {
     return typeof meme !== "string";
@@ -155,13 +246,6 @@ app.get("/getCSV", (req, res) => {
     express: outputParse,
     titles: titleParse
   });
-
-  /*
-  CSVReadStream.on("data", function(chunk) {
-    console.log(chunk);
-        res.send({ express: chunk });
-  });
-  */
 });
 
 //this is when express talks to the SQL data table "Memes"

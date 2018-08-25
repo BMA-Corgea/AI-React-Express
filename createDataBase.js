@@ -24,4 +24,19 @@ db.serialize(() => {
 
     console.log(rows);
   });
+
+  db.run("DROP TABLE IF EXISTS memeChanges", error => {
+    if (error) {
+      throw error;
+    }
+  });
+
+  db.run(
+    "CREATE TABLE memeChanges (id INTEGER PRIMARY KEY, date STRING, memeId STRING, newMemeText STRING, newMemePic STRING)",
+    error => {
+      if (error) {
+        throw error;
+      }
+    }
+  );
 });

@@ -27,7 +27,11 @@ class App extends Component {
       CSVTableHeaders: [],
       numberFound: 0,
       sentQueryTable: [],
-      fileInput: {}
+      fileInput: {},
+      fileInputHeaders: [],
+      fileInputBody: [],
+      fileInputTable: [],
+      fileInputStatus: false
     };
 
     //this initially fills out the table with all the data from the SQL databse
@@ -93,6 +97,102 @@ class App extends Component {
     this.handleSentQuery = this.handleSentQuery.bind(this);
     this.handleFileEnter = this.handleFileEnter.bind(this);
     this.handleFileInput = this.handleFileInput.bind(this);
+    this.parseFileInputTable = this.parseFileInputTable.bind(this);
+    this.confirmInputFile = this.confirmInputFile.bind(this);
+    this.deleteInputUpdate = this.deleteInputUpdate.bind(this);
+  }
+
+  deleteInputUpdate() {
+    this.setState({
+      fileInputHeaders: [],
+      fileInputBody: [],
+      fileInputTable: [],
+      fileInputStatus: false
+    });
+  }
+
+  confirmInputFile() {
+    this.sendFileConfirm(this.state.fileInput)
+      .then(res => {
+        console.log(res);
+      })
+      .then(
+        this.setState({
+          memeData: [],
+          changeData: [],
+          lastID: 0
+        })
+      )
+      .then(
+        this.callMemeData()
+          .then(res => {
+            for (
+              let memeIndex = 0;
+              memeIndex < res.express.length;
+              memeIndex++
+            ) {
+              this.setState({
+                lastID: res.express[memeIndex].id
+              });
+
+              this.setState({
+                memeData: [
+                  ...this.state.memeData,
+                  <tr key={res.express[memeIndex].id}>
+                    <td>{res.express[memeIndex].id}</td>
+                    <td>{res.express[memeIndex].memeText}</td>
+                    <td>{res.express[memeIndex].memePic}</td>
+                  </tr>
+                ]
+              });
+            }
+          })
+          .catch(err => console.log(err))
+      )
+      .then(
+        this.callMemeChanges().then(res => {
+          for (let memeIndex = 0; memeIndex < res.express.length; memeIndex++) {
+            this.setState({
+              changeData: [
+                ...this.state.changeData,
+                <tr key={res.express[memeIndex].id}>
+                  <td>{res.express[memeIndex].id}</td>
+                  <td>{res.express[memeIndex].date}</td>
+                  <td>{res.express[memeIndex].memeId}</td>
+                  <td>{res.express[memeIndex].newMemeText}</td>
+                  <td>{res.express[memeIndex].newMemePic}</td>
+                </tr>
+              ]
+            });
+          }
+        })
+      )
+      .catch(err => console.log(err));
+  }
+
+  sendFileConfirm = async enterFile => {
+    const response = await fetch("/confirmInputFile/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/vnd.ms-excel"
+      },
+      body: enterFile
+    });
+    const body = await response.json();
+
+    return body;
+  };
+
+  parseFileInputTable() {
+    if (this.state.fileInputStatus === true) {
+      return (
+        <div>
+          {this.state.fileInputTable}
+          <button onClick={this.confirmInputFile}>Confirm Update</button>
+          <button onClick={this.deleteInputUpdate}>Delete Update</button>
+        </div>
+      );
+    }
   }
 
   /*This will set the state so that file enter can send the result of this function
@@ -101,33 +201,84 @@ class App extends Component {
   get id. The next step is to pass that over to the express server for digestion*/
   handleFileInput(event) {
     event.persist();
-    this.setState(
-      {
-        fileInput: document.getElementById("updateFile").files[0]
-      },
-      () => {
-        console.log("this is the document get id");
-        console.log(document.getElementById("updateFile").files[0]);
-        console.log("this is the full event");
-        console.log(event);
-        console.log("this is the event target value");
-        console.log(event.target.value);
-        console.log("this is the state that is sent to Express");
-        console.log(this.state.fileInput);
-      }
-    );
+    this.setState({
+      fileInput: document.getElementById("updateFile").files[0]
+    });
   }
 
   /*The objective of this function is to be able to upload a CSV file that changes
   the data table. The file gets uploaded here and then sent off to the Express
   server where it can be digested and sent into the SQL database*/
   handleFileEnter(event) {
-    this.sendFileEnter(this.state.fileInput)
-      .then(res => {
-        console.log("this is the result sent back from Express");
-        console.log(res);
-      })
-      .catch(err => console.log(err));
+    this.setState(
+      {
+        fileInputHeaders: [],
+        fileInputBody: [],
+        fileInputTable: [],
+        fileInputStatus: false
+      },
+      () => {
+        this.sendFileEnter(this.state.fileInput)
+          .then(res => {
+            for (
+              let bodyIndex = 0;
+              bodyIndex < res.express.length;
+              bodyIndex++
+            ) {
+              let tableRow = [];
+              for (
+                let keyIndex = 0;
+                keyIndex < Object.keys(res.express[0]).length;
+                keyIndex++
+              ) {
+                tableRow.push(
+                  <TableData
+                    key={keyIndex}
+                    tableKey={keyIndex}
+                    dataPoint={
+                      res.express[bodyIndex][
+                        Object.keys(res.express[bodyIndex])[keyIndex]
+                      ]
+                    }
+                  />
+                );
+              }
+              this.setState({
+                fileInputBody: [
+                  ...this.state.fileInputBody,
+                  <tr key={bodyIndex}>{tableRow}</tr>
+                ]
+              });
+            }
+
+            for (
+              let headerIndex = 0;
+              headerIndex < res.titles.length;
+              headerIndex++
+            ) {
+              this.setState({
+                fileInputHeaders: [
+                  ...this.state.fileInputHeaders,
+                  <th key={headerIndex}>{res.titles[headerIndex]}</th>
+                ]
+              });
+            }
+
+            this.setState({
+              fileInputTable: [
+                <table key="1">
+                  <thead>
+                    <tr>{this.state.fileInputHeaders}</tr>
+                  </thead>
+                  <tbody>{this.state.fileInputBody}</tbody>
+                </table>
+              ],
+              fileInputStatus: true
+            });
+          })
+          .catch(err => console.log(err));
+      }
+    );
 
     event.preventDefault();
   }
@@ -843,11 +994,18 @@ the filterMemeData() function.*/
         </table>
         <br />
         <br />
-        <p>Upload a CSV to edit the table here:</p>
+        <h3>Upload a CSV to edit the table here:</h3>
         <form>
-          <input id="updateFile" type="file" onChange={this.handleFileInput} />
+          <input
+            id="updateFile"
+            type="file"
+            onChange={this.handleFileInput}
+            accept=".csv"
+          />
           <button onClick={this.handleFileEnter}>Enter file</button>
         </form>
+        <br />
+        {this.parseFileInputTable()}
       </div>
     );
   }
