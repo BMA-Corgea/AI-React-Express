@@ -103,7 +103,7 @@ class App extends Component {
     event.persist();
     this.setState(
       {
-        fileInput: event.target.value
+        fileInput: document.getElementById("updateFile").files[0]
       },
       () => {
         console.log("this is the document get id");
@@ -138,7 +138,7 @@ class App extends Component {
     const response = await fetch("/sendInputFile/", {
       method: "POST",
       headers: {
-        "Content-Type": "text/csv"
+        "Content-Type": "application/vnd.ms-excel"
       },
       body: enterFile
     });

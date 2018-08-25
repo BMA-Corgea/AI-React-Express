@@ -19,36 +19,13 @@ repeat functions. In this case, the imported function checks requests
 for a body and, if it does have one, it can be observed by the express
 server as req.body*/
 app.use(bodyParser.json());
-app.use(bodyParser.text({ type: "text/csv" }));
+app.use(bodyParser.text({ type: "application/vnd.ms-excel" }));
 
 /*This will take a file from the front end, check if it's a CSV, and send a response
 if it's not, but if it is a CSV, then it will update the data table and send a
 success response*/
 app.post("/sendInputFile", (req, res) => {
-  const output = fs
-    .readFileSync(req.body, "utf8")
-    .trim()
-    .split("\r\n")
-    .map(line => line.split(","))
-    .reduce((memes, line) => {
-      titles = [];
-      object = {};
-      experimentMeme = [];
-
-      titles = memes.filter(meme => {
-        return typeof meme === "string";
-      });
-
-      for (memeIndex = 0; memeIndex < titles.length; memeIndex++) {
-        object[titles[memeIndex]] = line[memeIndex];
-      }
-
-      memes.push(object);
-
-      return memes;
-    });
-
-  res.send({ express: memes });
+  res.send({ express: req.body });
 });
 
 /*These three functions translate the query table on the front end into information
