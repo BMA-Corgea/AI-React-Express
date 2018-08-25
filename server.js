@@ -89,6 +89,11 @@ app.post("/sendInputFile", (req, res) => {
 
 /*I want a warning to appear before I confirm a mass update. This way, I can
 check before I ruin everything*/
+/*First we parse the CSV and then we get two for loops going.
+To work from the inside out, we get the current data table updated one data point
+at a time. This is significant because it doesn't matter how many fields there are
+second, all the data points for a given row are put into the change table and then
+a confirmation is sent back to the front end*/
 app.post("/confirmInputFile", (req, res) => {
   const output = parseCSV(req.body);
 

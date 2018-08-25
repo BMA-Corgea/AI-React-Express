@@ -102,6 +102,7 @@ class App extends Component {
     this.deleteInputUpdate = this.deleteInputUpdate.bind(this);
   }
 
+  //If the file chosen is incorrect, then you can clear the table that is made out of the data
   deleteInputUpdate() {
     this.setState({
       fileInputHeaders: [],
@@ -111,6 +112,10 @@ class App extends Component {
     });
   }
 
+  /*This seems like a large function, but the majority of it is simply copy and pasting
+the refreshing of the current data table and the change table
+the confirmation is a post request and console logging a success statement (or catching
+an error)*/
   confirmInputFile() {
     this.sendFileConfirm(this.state.fileInput)
       .then(res => {
@@ -170,6 +175,7 @@ class App extends Component {
       .catch(err => console.log(err));
   }
 
+  //Post request for CSV file, note the content type
   sendFileConfirm = async enterFile => {
     const response = await fetch("/confirmInputFile/", {
       method: "POST",
@@ -183,6 +189,8 @@ class App extends Component {
     return body;
   };
 
+  /*The first post request returns a table that makes sure that the CSV file
+contains the correct information before a mass update*/
   parseFileInputTable() {
     if (this.state.fileInputStatus === true) {
       return (
@@ -209,6 +217,10 @@ class App extends Component {
   /*The objective of this function is to be able to upload a CSV file that changes
   the data table. The file gets uploaded here and then sent off to the Express
   server where it can be digested and sent into the SQL database*/
+  /*The previous table is deleted so it doesn't get stacked on top of and then
+  two for loops are used to select each row and put each table data piece inside
+  of it. After that, the table is constructed, and a true/false is triggered
+  to show the table (instead of nothing) along with buttons to confirm or deny*/
   handleFileEnter(event) {
     this.setState(
       {
