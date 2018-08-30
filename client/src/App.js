@@ -100,6 +100,96 @@ class App extends Component {
     this.parseFileInputTable = this.parseFileInputTable.bind(this);
     this.confirmInputFile = this.confirmInputFile.bind(this);
     this.deleteInputUpdate = this.deleteInputUpdate.bind(this);
+    this.handleMemeDataExport = this.handleMemeDataExport.bind(this);
+    this.handleChangeDataExport = this.handleChangeDataExport.bind(this);
+  }
+
+  /*I'm not perfectly happy about these two functions, but they work. I feel like the parsing could
+be done server side and the front end would be passed an array that is the end result of 
+exportCSVHeaders. To that end, I don't think that the headers should have to be hard coded,
+but that's how the data comes in. After that, I don't know anything about the blob code, but
+it functions.*/
+  handleMemeDataExport(event) {
+    let exportCSVHeaders = ["ID", "Meme Text", "Meme Pic"];
+    let exportCSV = [];
+    this.callMemeData().then(res => {
+      for (let rowIndex = 0; rowIndex < res.express.length; rowIndex++) {
+        let rowData = [];
+        for (
+          let keyIndex = 0;
+          keyIndex < Object.keys(res.express[rowIndex]).length;
+          keyIndex++
+        ) {
+          rowData.push(
+            res.express[rowIndex][Object.keys(res.express[rowIndex])[keyIndex]]
+          );
+        }
+        exportCSV = [...exportCSV, rowData.join(",") + "\r\n"];
+      }
+      exportCSV = [exportCSVHeaders.join(",") + "\r\n", ...exportCSV];
+
+      let blob = new Blob(exportCSV, { type: "text/csv;charset=utf-8;" });
+      if (navigator.msSaveBlob) {
+        // IE 10+
+        navigator.msSaveBlob(blob, "Meme Table Data.csv");
+      } else {
+        var link = document.createElement("a");
+        if (link.download !== undefined) {
+          // feature detection
+          // Browsers that support HTML5 download attribute
+          var url = URL.createObjectURL(blob);
+          link.setAttribute("href", url);
+          link.setAttribute("download", "Meme Table Data.csv");
+          link.style.visibility = "hidden";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+      }
+    });
+    event.preventDefault();
+  }
+
+  /*Identical to the function above it, except that the headers are changed (along with the filename)*/
+  handleChangeDataExport(event) {
+    let exportCSVHeaders = ["id", "date", "meme Id", "meme text", "meme pic"];
+    let exportCSV = [];
+    this.callMemeChanges().then(res => {
+      for (let rowIndex = 0; rowIndex < res.express.length; rowIndex++) {
+        let rowData = [];
+        for (
+          let keyIndex = 0;
+          keyIndex < Object.keys(res.express[rowIndex]).length;
+          keyIndex++
+        ) {
+          rowData.push(
+            res.express[rowIndex][Object.keys(res.express[rowIndex])[keyIndex]]
+          );
+        }
+        exportCSV = [...exportCSV, rowData.join(",") + "\r\n"];
+      }
+      exportCSV = [exportCSVHeaders.join(",") + "\r\n", ...exportCSV];
+
+      let blob = new Blob(exportCSV, { type: "text/csv;charset=utf-8;" });
+      if (navigator.msSaveBlob) {
+        // IE 10+
+        navigator.msSaveBlob(blob, "Meme Table Changes.csv");
+      } else {
+        var link = document.createElement("a");
+        if (link.download !== undefined) {
+          // feature detection
+          // Browsers that support HTML5 download attribute
+          var url = URL.createObjectURL(blob);
+          link.setAttribute("href", url);
+          link.setAttribute("download", "Meme Table Changes.csv");
+          link.style.visibility = "hidden";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+      }
+    });
+    event.preventDefault();
   }
 
   //If the file chosen is incorrect, then you can clear the table that is made out of the data
@@ -1018,6 +1108,18 @@ the filterMemeData() function.*/
         </form>
         <br />
         {this.parseFileInputTable()}
+        <br />
+        <br />
+        <h3>Export the different data tables:</h3>
+        <form>
+          <button onClick={this.handleMemeDataExport}>
+            Export the meme data
+          </button>
+          <br />
+          <button onClick={this.handleChangeDataExport}>
+            Export the change log
+          </button>
+        </form>
       </div>
     );
   }
