@@ -31,7 +31,10 @@ class App extends Component {
       fileInputHeaders: [],
       fileInputBody: [],
       fileInputTable: [],
-      fileInputStatus: false
+      fileInputStatus: false,
+      addRowFileTable: [],
+      addRowFileStatus: false,
+      addRowInput: {}
     };
 
     //this initially fills out the table with all the data from the SQL databse
@@ -103,10 +106,54 @@ class App extends Component {
     this.handleMemeDataExport = this.handleMemeDataExport.bind(this);
     this.handleChangeDataExport = this.handleChangeDataExport.bind(this);
     this.handleFileRowAdd = this.handleFileRowAdd.bind(this);
+    this.parseObjectToCSV = this.parseObjectToCSV.bind(this);
     this.parseObjectToTable = this.parseObjectToTable.bind(this);
+    this.confirmAddRowFile = this.confirmAddRowFile.bind(this);
+    this.deleteAddRowFile = this.deleteAddRowFile.bind(this);
   }
 
+  /*This is a reusable piece of code that takes the code that is created by the
+express server's reusable piece of code and turns it into an HTML table*/
   parseObjectToTable(JSONObject) {
+    let outputHeaders = [...Object.keys(JSONObject[0])].map(meme => {
+      return <th key={meme}>{meme}</th>;
+    });
+    let Output = [];
+
+    for (let rowIndex = 0; rowIndex < JSONObject.length; rowIndex++) {
+      let tableRow = [];
+
+      for (
+        let keyIndex = 0;
+        keyIndex < Object.keys(JSONObject[rowIndex]).length;
+        keyIndex++
+      ) {
+        tableRow.push(
+          <TableData
+            key={keyIndex}
+            tableKey={keyIndex}
+            dataPoint={
+              JSONObject[rowIndex][Object.keys(JSONObject[rowIndex])[keyIndex]]
+            }
+          />
+        );
+      }
+      Output.push(<tr key={rowIndex}>{[...tableRow]}</tr>);
+    }
+
+    return (
+      <table>
+        <thead>
+          <tr>{outputHeaders}</tr>
+        </thead>
+        <tbody>{Output}</tbody>
+      </table>
+    );
+  }
+
+  /*This is a reusable piece of code that takes the code that is created by the
+express server's reusable piece of code and turns it into a CSV file format*/
+  parseObjectToCSV(JSONObject) {
     let outputHeaders = [...Object.keys(JSONObject[0])];
     let Output = [];
 
@@ -128,11 +175,148 @@ class App extends Component {
     return Output;
   }
 
+  /*This is a copy of the CSV edit code. When the add rows are added, it triggers
+a boolean change that puts the state table onto the front end. Along with this
+comes two buttons that can either confirm or delete an update. Delete turns
+the state back to before the file was added, confirm throws it back to the server*/
+  parseAddRowTable() {
+    if (this.state.addRowFileStatus === true) {
+      return (
+        <div>
+          {this.state.addRowFileTable}
+          <button onClick={this.confirmAddRowFile}>Confirm Update</button>
+          <button onClick={this.deleteAddRowFile}>Delete Update</button>
+        </div>
+      );
+    }
+  }
+
+  confirmAddRowFileSend = async enterFile => {
+    const response = await fetch("/confirmAddRowFile/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/vnd.ms-excel"
+      },
+      body: enterFile
+    });
+    const body = await response.json();
+
+    return body;
+  };
+
+  confirmAddRowFile() {
+    this.confirmAddRowFileSend(this.state.addRowInput)
+      .then(res => {
+        if (res.error) {
+          alert(res.error);
+        }
+
+        if (res.express) {
+          console.log(res.express);
+        }
+      })
+      .then(
+        this.setState({
+          memeData: [],
+          changeData: [],
+          lastID: 0
+        })
+      )
+      .then(
+        this.callMemeData()
+          .then(res => {
+            for (
+              let memeIndex = 0;
+              memeIndex < res.express.length;
+              memeIndex++
+            ) {
+              this.setState({
+                lastID: res.express[memeIndex].id
+              });
+
+              this.setState({
+                memeData: [
+                  ...this.state.memeData,
+                  <tr key={res.express[memeIndex].id}>
+                    <td>{res.express[memeIndex].id}</td>
+                    <td>{res.express[memeIndex].memeText}</td>
+                    <td>{res.express[memeIndex].memePic}</td>
+                  </tr>
+                ]
+              });
+            }
+          })
+          .catch(err => console.log(err))
+      )
+      .then(
+        this.callMemeChanges().then(res => {
+          for (let memeIndex = 0; memeIndex < res.express.length; memeIndex++) {
+            this.setState({
+              changeData: [
+                ...this.state.changeData,
+                <tr key={res.express[memeIndex].id}>
+                  <td>{res.express[memeIndex].id}</td>
+                  <td>{res.express[memeIndex].date}</td>
+                  <td>{res.express[memeIndex].memeId}</td>
+                  <td>{res.express[memeIndex].newMemeText}</td>
+                  <td>{res.express[memeIndex].newMemePic}</td>
+                </tr>
+              ]
+            });
+          }
+        })
+      )
+      .catch(err => console.log(err))
+      .catch(err => {
+        console.log(err);
+      });
+  }
+
+  deleteAddRowFile() {
+    this.setState({
+      addRowFileTable: [],
+      addRowFileStatus: false,
+      addRowInput: {}
+    });
+  }
+
   /*This will build off everything that's been happening. It'll be a ping to the
   server with a CSV file that then gets parsed and added to the data table and
   change log. The difference with this one is that it will return an error if
   there are rows that contain errors*/
-  handleFileRowAdd() {}
+  handleFileRowAdd(event) {
+    this.setState(
+      {
+        addRowInput: document.getElementById("addRowFile").files[0]
+      },
+      () => {
+        this.sendAddRowFile(this.state.addRowInput)
+          .then(res => {
+            this.setState({
+              addRowFileStatus: true,
+              addRowFileTable: this.parseObjectToTable(res.express)
+            });
+          })
+          .catch(err => {
+            console.log(err);
+          });
+      }
+    );
+    event.preventDefault();
+  }
+
+  sendAddRowFile = async enterFile => {
+    const response = await fetch("/sendAddRowFile/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/vnd.ms-excel"
+      },
+      body: enterFile
+    });
+    const body = await response.json();
+
+    return body;
+  };
 
   /*I'm not perfectly happy about these two functions, but they work. I feel like the parsing could
 be done server side and the front end would be passed an array that is the end result of
@@ -141,7 +325,7 @@ but that's how the data comes in. After that, I don't know anything about the bl
 it functions.*/
   handleMemeDataExport(event) {
     this.callMemeData().then(res => {
-      let exportCSV = this.parseObjectToTable(res.express);
+      let exportCSV = this.parseObjectToCSV(res.express);
 
       let blob = new Blob(exportCSV, { type: "text/csv;charset=utf-8;" });
       if (navigator.msSaveBlob) {
@@ -168,7 +352,7 @@ it functions.*/
   /*Identical to the function above it, except that the headers are changed (along with the filename)*/
   handleChangeDataExport(event) {
     this.callMemeChanges().then(res => {
-      let exportCSV = this.parseObjectToTable(res.express);
+      let exportCSV = this.parseObjectToCSV(res.express);
 
       let blob = new Blob(exportCSV, { type: "text/csv;charset=utf-8;" });
       if (navigator.msSaveBlob) {
@@ -1124,13 +1308,10 @@ the filterMemeData() function.*/
         <br />
         <h3>Add Data Rows en Masse:</h3>
         <form>
-          <input
-            id="updateFile"
-            type="file"
-            onChange={this.handleFileRowAdd}
-            accept=".csv"
-          />
+          <input id="addRowFile" type="file" accept=".csv" />
+          <button onClick={this.handleFileRowAdd}>Enter add rows</button>
         </form>
+        {this.parseAddRowTable()}
       </div>
     );
   }

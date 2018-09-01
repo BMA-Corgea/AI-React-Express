@@ -67,6 +67,110 @@ function whichColumn(columnIndex) {
   }
 }
 
+/*This function takes a bunch of rows and adds them to the data table and change log*/
+app.post("/confirmAddRowFile", (req, res) => {
+  let output = parseCSV(req.body);
+  let outputParse = output.filter(meme => {
+    return typeof meme !== "string";
+  });
+  let titleParse = output.filter(meme => {
+    return typeof meme === "string";
+  });
+  let acceptableHeadersInOrder = ["memeText", "memePic"];
+  let unacceptableHeadingBoolean = false;
+  let uHBIndex = 0;
+  let fileHeadersOrder = [];
+
+  for (let headingIndex = 0; headingIndex < titleParse.length; headingIndex++) {
+    if (acceptableHeadersInOrder.includes(titleParse[headingIndex]) === false) {
+      unacceptableHeadingBoolean = true;
+      uHBIndex = headingIndex;
+    } else {
+      for (
+        acceptableHeaderIndex = 0;
+        acceptableHeaderIndex < acceptableHeadersInOrder.length;
+        acceptableHeaderIndex++
+      ) {
+        if (
+          acceptableHeadersInOrder[acceptableHeaderIndex] ===
+          titleParse[headingIndex]
+        ) {
+          fileHeadersOrder.push(acceptableHeaderIndex);
+        }
+      }
+    }
+  }
+
+  if (unacceptableHeadingBoolean === true) {
+    res.send({ error: `I don't like the heading for column ${uHBIndex + 1}` });
+  } else if (
+    unacceptableHeadingBoolean === false &&
+    titleParse.length < acceptableHeadersInOrder.length
+  ) {
+    res.send({
+      error: `At least one of the headings is missing from the file`
+    });
+  } else {
+    for (let rowIndex = 0; rowIndex < outputParse.length; rowIndex++) {
+      let rowData = [];
+
+      for (
+        let columnIndex = 0;
+        columnIndex < titleParse.length;
+        columnIndex++
+      ) {
+        rowData.push(
+          outputParse[rowIndex][Object.keys(outputParse[rowIndex])[columnIndex]]
+        );
+      }
+
+      db.serialize(() => {
+        db.run(
+          `INSERT INTO Memes (memeText, memePic) VALUES ("${
+            rowData[fileHeadersOrder[0]]
+          }", "${rowData[fileHeadersOrder[1]]}")`,
+          error => {
+            if (error) {
+              throw error;
+            }
+          }
+        ),
+          db.get(
+            "SELECT * FROM Memes WHERE id=last_insert_rowid()",
+            (error, row) => {
+              if (error) {
+                throw error;
+              }
+
+              db.run(
+                `INSERT INTO memeChanges (date, memeId, newMemeText, newMemePic) VALUES ("${makeTimeStamp()}", "${
+                  row.id
+                }", "${rowData[fileHeadersOrder[0]]}", "${
+                  rowData[fileHeadersOrder[1]]
+                }")`
+              );
+            }
+          );
+      });
+    }
+  }
+
+  res.send({ express: "I think the rows have been added!" });
+});
+
+/*This function will parse a file into a format that the front end can understand
+Once the user gets a chance to see the rows that they intend to add, then they can
+confirm the add rows*/
+app.post("/sendAddRowFile/", (req, res) => {
+  let output = parseCSV(req.body);
+
+  let outputParse = output.filter(meme => {
+    return typeof meme !== "string";
+  });
+
+  res.send({ express: outputParse });
+});
+
 /*This will take a file from the front end, check if it's a CSV, and send a response
 if it's not, but if it is a CSV, then it will update the data table and send a
 success response*/
@@ -334,7 +438,7 @@ app.post("/memePost/", (req, res, next) => {
       }
     );
 
-    db.get("SELECT * FROM Memes WHERE id=last_insert_rowid()", (error, row) => {
+    db.get("SELECT * FROM Memes WHERE _insert_rowid()", (error, row) => {
       if (error) {
         throw error;
       }
