@@ -1,4 +1,4 @@
-ID,Meme Text,Meme Pic
+id,memeText,memePic
 1,what,heck
 2,hello,world
 3,goodbye,world
@@ -9,3 +9,4 @@ ID,Meme Text,Meme Pic
 9,Topographical Map,Warm-up Sketch
 10,Topographical Map,Masterpiece
 11,Character Portrait,Masterpiece
+12,Unfinished Story,Oil Painting

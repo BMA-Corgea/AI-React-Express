@@ -102,31 +102,46 @@ class App extends Component {
     this.deleteInputUpdate = this.deleteInputUpdate.bind(this);
     this.handleMemeDataExport = this.handleMemeDataExport.bind(this);
     this.handleChangeDataExport = this.handleChangeDataExport.bind(this);
+    this.handleFileRowAdd = this.handleFileRowAdd.bind(this);
+    this.parseObjectToTable = this.parseObjectToTable.bind(this);
   }
 
+  parseObjectToTable(JSONObject) {
+    let outputHeaders = [...Object.keys(JSONObject[0])];
+    let Output = [];
+
+    for (let rowIndex = 0; rowIndex < JSONObject.length; rowIndex++) {
+      let rowData = [];
+      for (
+        let keyIndex = 0;
+        keyIndex < Object.keys(JSONObject[rowIndex]).length;
+        keyIndex++
+      ) {
+        rowData.push(
+          JSONObject[rowIndex][Object.keys(JSONObject[rowIndex])[keyIndex]]
+        );
+      }
+      Output = [...Output, rowData.join(",") + "\r\n"];
+    }
+    Output = [outputHeaders.join(",") + "\r\n", ...Output];
+
+    return Output;
+  }
+
+  /*This will build off everything that's been happening. It'll be a ping to the
+  server with a CSV file that then gets parsed and added to the data table and
+  change log. The difference with this one is that it will return an error if
+  there are rows that contain errors*/
+  handleFileRowAdd() {}
+
   /*I'm not perfectly happy about these two functions, but they work. I feel like the parsing could
-be done server side and the front end would be passed an array that is the end result of 
+be done server side and the front end would be passed an array that is the end result of
 exportCSVHeaders. To that end, I don't think that the headers should have to be hard coded,
 but that's how the data comes in. After that, I don't know anything about the blob code, but
 it functions.*/
   handleMemeDataExport(event) {
-    let exportCSVHeaders = ["ID", "Meme Text", "Meme Pic"];
-    let exportCSV = [];
     this.callMemeData().then(res => {
-      for (let rowIndex = 0; rowIndex < res.express.length; rowIndex++) {
-        let rowData = [];
-        for (
-          let keyIndex = 0;
-          keyIndex < Object.keys(res.express[rowIndex]).length;
-          keyIndex++
-        ) {
-          rowData.push(
-            res.express[rowIndex][Object.keys(res.express[rowIndex])[keyIndex]]
-          );
-        }
-        exportCSV = [...exportCSV, rowData.join(",") + "\r\n"];
-      }
-      exportCSV = [exportCSVHeaders.join(",") + "\r\n", ...exportCSV];
+      let exportCSV = this.parseObjectToTable(res.express);
 
       let blob = new Blob(exportCSV, { type: "text/csv;charset=utf-8;" });
       if (navigator.msSaveBlob) {
@@ -152,23 +167,8 @@ it functions.*/
 
   /*Identical to the function above it, except that the headers are changed (along with the filename)*/
   handleChangeDataExport(event) {
-    let exportCSVHeaders = ["id", "date", "meme Id", "meme text", "meme pic"];
-    let exportCSV = [];
     this.callMemeChanges().then(res => {
-      for (let rowIndex = 0; rowIndex < res.express.length; rowIndex++) {
-        let rowData = [];
-        for (
-          let keyIndex = 0;
-          keyIndex < Object.keys(res.express[rowIndex]).length;
-          keyIndex++
-        ) {
-          rowData.push(
-            res.express[rowIndex][Object.keys(res.express[rowIndex])[keyIndex]]
-          );
-        }
-        exportCSV = [...exportCSV, rowData.join(",") + "\r\n"];
-      }
-      exportCSV = [exportCSVHeaders.join(",") + "\r\n", ...exportCSV];
+      let exportCSV = this.parseObjectToTable(res.express);
 
       let blob = new Blob(exportCSV, { type: "text/csv;charset=utf-8;" });
       if (navigator.msSaveBlob) {
@@ -1119,6 +1119,17 @@ the filterMemeData() function.*/
           <button onClick={this.handleChangeDataExport}>
             Export the change log
           </button>
+        </form>
+        <br />
+        <br />
+        <h3>Add Data Rows en Masse:</h3>
+        <form>
+          <input
+            id="updateFile"
+            type="file"
+            onChange={this.handleFileRowAdd}
+            accept=".csv"
+          />
         </form>
       </div>
     );
