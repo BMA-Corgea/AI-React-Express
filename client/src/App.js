@@ -277,61 +277,7 @@ the state back to before the file was added, confirm throws it back to the serve
           console.log(res.express);
         }
       })
-      .then(
-        this.setState({
-          memeData: [],
-          changeData: [],
-          lastID: 0
-        })
-      )
-      .then(
-        this.callMemeData()
-          .then(res => {
-            for (
-              let memeIndex = 0;
-              memeIndex < res.express.length;
-              memeIndex++
-            ) {
-              this.setState({
-                lastID: res.express[memeIndex].id
-              });
-
-              this.setState({
-                memeData: [
-                  ...this.state.memeData,
-                  <tr key={res.express[memeIndex].id}>
-                    <td>{res.express[memeIndex].id}</td>
-                    <td>{res.express[memeIndex].memeText}</td>
-                    <td>{res.express[memeIndex].memePic}</td>
-                  </tr>
-                ]
-              });
-            }
-          })
-          .catch(err => console.log(err))
-      )
-      .then(
-        this.callMemeChanges().then(res => {
-          for (let memeIndex = 0; memeIndex < res.express.length; memeIndex++) {
-            this.setState({
-              changeData: [
-                ...this.state.changeData,
-                <tr key={res.express[memeIndex].id}>
-                  <td>{res.express[memeIndex].id}</td>
-                  <td>{res.express[memeIndex].date}</td>
-                  <td>{res.express[memeIndex].memeId}</td>
-                  <td>{res.express[memeIndex].newMemeText}</td>
-                  <td>{res.express[memeIndex].newMemePic}</td>
-                </tr>
-              ]
-            });
-          }
-        })
-      )
-      .catch(err => console.log(err))
-      .catch(err => {
-        console.log(err);
-      });
+      .then(this.forceUpdate());
   }
 
   deleteAddRowFile() {
@@ -457,58 +403,7 @@ an error)*/
       .then(res => {
         console.log(res);
       })
-      .then(
-        this.setState({
-          memeData: [],
-          changeData: [],
-          lastID: 0
-        })
-      )
-      .then(
-        this.callMemeData()
-          .then(res => {
-            for (
-              let memeIndex = 0;
-              memeIndex < res.express.length;
-              memeIndex++
-            ) {
-              this.setState({
-                lastID: res.express[memeIndex].id
-              });
-
-              this.setState({
-                memeData: [
-                  ...this.state.memeData,
-                  <tr key={res.express[memeIndex].id}>
-                    <td>{res.express[memeIndex].id}</td>
-                    <td>{res.express[memeIndex].memeText}</td>
-                    <td>{res.express[memeIndex].memePic}</td>
-                  </tr>
-                ]
-              });
-            }
-          })
-          .catch(err => console.log(err))
-      )
-      .then(
-        this.callMemeChanges().then(res => {
-          for (let memeIndex = 0; memeIndex < res.express.length; memeIndex++) {
-            this.setState({
-              changeData: [
-                ...this.state.changeData,
-                <tr key={res.express[memeIndex].id}>
-                  <td>{res.express[memeIndex].id}</td>
-                  <td>{res.express[memeIndex].date}</td>
-                  <td>{res.express[memeIndex].memeId}</td>
-                  <td>{res.express[memeIndex].newMemeText}</td>
-                  <td>{res.express[memeIndex].newMemePic}</td>
-                </tr>
-              ]
-            });
-          }
-        })
-      )
-      .catch(err => console.log(err));
+      .then(this.forceUpdate());
   }
 
   //Post request for CSV file, note the content type
