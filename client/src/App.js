@@ -110,6 +110,68 @@ class App extends Component {
     this.parseObjectToTable = this.parseObjectToTable.bind(this);
     this.confirmAddRowFile = this.confirmAddRowFile.bind(this);
     this.deleteAddRowFile = this.deleteAddRowFile.bind(this);
+    this.forceUpdate = this.forceUpdate.bind(this);
+  }
+
+  /*Recheck the meme data and the change table because the methods used
+  to automatically update are unreliable. This is a reimagining of the
+  code that is used after a mass update with a CSV file*/
+  forceUpdate() {
+    this.setState(
+      {
+        memeData: [],
+        changeData: [],
+        lastID: 0
+      },
+      () => {
+        this.callMemeData()
+          .then(res => {
+            this.setState({
+              lastID: res.express.length
+            });
+            for (
+              let memeIndex = 0;
+              memeIndex < res.express.length;
+              memeIndex++
+            ) {
+              this.setState({
+                memeData: [
+                  ...this.state.memeData,
+                  <tr key={res.express[memeIndex].id}>
+                    <td>{res.express[memeIndex].id}</td>
+                    <td>{res.express[memeIndex].memeText}</td>
+                    <td>{res.express[memeIndex].memePic}</td>
+                  </tr>
+                ]
+              });
+            }
+          })
+          .catch(err => console.log(err));
+
+        this.callMemeChanges()
+          .then(res => {
+            for (
+              let memeIndex = 0;
+              memeIndex < res.express.length;
+              memeIndex++
+            ) {
+              this.setState({
+                changeData: [
+                  ...this.state.changeData,
+                  <tr key={res.express[memeIndex].id}>
+                    <td>{res.express[memeIndex].id}</td>
+                    <td>{res.express[memeIndex].date}</td>
+                    <td>{res.express[memeIndex].memeId}</td>
+                    <td>{res.express[memeIndex].newMemeText}</td>
+                    <td>{res.express[memeIndex].newMemePic}</td>
+                  </tr>
+                ]
+              });
+            }
+          })
+          .catch(err => console.log(err));
+      }
+    );
   }
 
   /*This is a reusable piece of code that takes the code that is created by the
@@ -847,8 +909,10 @@ the filterMemeData() function.*/
 
   //adding a new row to the table doesn't always make it appear. This button makes it appear
   //it's the handle for an unstuck button
-  checkUpdate() {
+  checkUpdate(event) {
     this.forceUpdate();
+
+    event.preventDefault();
   }
 
   //this will clear out the database by asking the server to do it
@@ -864,9 +928,7 @@ the filterMemeData() function.*/
 
   //add a row via a post request
   addMeme() {
-    this.postMeme()
-      .catch(err => console.log(err))
-      .then(this.forceUpdate());
+    this.postMeme().catch(err => console.log(err));
   }
 
   //this is the async function that sends the request to the express server
