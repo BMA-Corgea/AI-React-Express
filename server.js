@@ -438,7 +438,7 @@ app.post("/memePost/", (req, res, next) => {
       }
     );
 
-    db.get("SELECT * FROM Memes WHERE _insert_rowid()", (error, row) => {
+    db.get("SELECT * FROM Memes WHERE id=last_insert_rowid()", (error, row) => {
       if (error) {
         throw error;
       }
